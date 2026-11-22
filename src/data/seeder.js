@@ -12,7 +12,7 @@ const importarDados = async () => {
 
     await Caso.deleteMany({});
     console.log('🗑️  Base de dados limpa!');
-
+    
     await Caso.insertMany(casosIniciais);
     console.log('✅ Novas dados populados com sucesso com relatórios e depoimentos!');
 

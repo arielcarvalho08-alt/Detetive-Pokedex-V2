@@ -26,11 +26,27 @@
   </main>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       const pasta = document.getElementById("link-caso-diario");
       if (pasta) {
         const angulo = (Math.random() * 14 - 7).toFixed(1);
         pasta.style.transform = `rotate(${angulo}deg)`;
+      }
+
+      try {
+        const res = await fetch("/api/casos/daily");
+        if (res.ok) {
+          const caso = await res.json();
+          const numEl = pasta?.querySelector(".numero-caso");
+          const titEl = document.getElementById("titulo-caso-diario");
+          const difEl = pasta?.querySelector(".tag-dificuldade");
+
+          if (numEl && caso.numero_caso) numEl.textContent = `${caso.numero_caso} • 24H`;
+          if (titEl && caso.titulo) titEl.textContent = caso.titulo;
+          if (difEl && caso.rank) difEl.textContent = `Rank ${caso.rank} — ${caso.dificuldade || "Especial"}`;
+        }
+      } catch (e) {
+        console.error("Erro ao carregar prévia do caso diário:", e);
       }
     });
   </script>

@@ -2,8 +2,8 @@ const Caso = require('../models/Caso.js');
 
 exports.getDailyCaso = async (req, res) => {
   try {
-    const caso = await Caso.findOne({ is_daily: true });
-    if (!caso) return res.status(404).json({ mensagem: 'Caso diário não encontrado.' });
+    const caso = await resolverCasoDoDia();
+    if (!caso) return res.status(404).json({ mensagem: 'Nenhum caso disponível para o diário.' });
     
     const casoParaFront = caso.toObject();
     delete casoParaFront.pokemon_correto;
@@ -35,6 +35,20 @@ exports.getCasoPorId = async (req, res) => {
     res.status(500).json({ mensagem: 'Erro ao procurar o caso.', erro: error.message });
   }
 };
+
+async function resolverCasoDoDia() {
+  const todosCasos = await Caso.find({});
+  if (!todosCasos || todosCasos.lenght === 0) return null;
+
+  const hojeStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Fortaleza' });
+  let soma = 0;
+  for (let i = 0; i < hojeStr.length; i++) {
+    soma += hojeStr.charCodeAt(i) * (i + 1);
+  }
+
+  const indice = soma % todosCasos.length;
+  return todosCasos[indice];
+}
 
 function compararNomesPokemon(palpite, correto) {
   if (!palpite || !correto) return false;

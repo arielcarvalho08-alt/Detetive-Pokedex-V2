@@ -11,6 +11,7 @@
     <header class="cabecalho-terminal">
       <h1>DEPARTAMENTO DE INVESTIGAÇÃO POLICIAL</h1>
       <p class="subtitulo-terminal">SISTEMA DETETIVE POKÉDEX — PAINEL DE CONTROLE</p>
+      <button type="button" id="btn-como-jogar" class="btn-como-jogar">📁 COMO JOGAR</button>
     </header>
 
     <main class="menu-principal">
@@ -29,5 +30,19 @@
       </div>
     </main>
   </div>
+
+  <script src="/js/manualModal.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      window.exibirModalInstrucaoLayout('jogo', false);
+
+      const btnComoJogar = document.getElementById('btn-como-jogar');
+      if (btnComoJogar) {
+        btnComoJogar.addEventListener('click', () => {
+          window.exibirModalInstrucaoLayout('jogo', true);
+        });
+      }
+    });
+  </script>
 </body>
 </html>

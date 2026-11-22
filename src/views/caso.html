@@ -12,31 +12,15 @@
     <header class="painel-topo">
       <a href="/campanha" class="btn-voltar-caso">← Voltar para a Mesa de Casos</a>
       <h1 id="titulo-caso" class="titulo-caso-detalhe">A carregar caso...</h1>
+      <button type="button" onclick="exibirModalInstrucaoLayout('${caso.tipo_layout}', true)" style="background: #3b2718; color: #ffcc00; border: 1px solid #5a3d28; padding: 6px 12px; font-family: monospace; font-weight: bold; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+          📁
+      </button>
       <span id="rank-caso" class="badge-rank">RANK -</span>
     </header>
 
     <div class="layout-investigacao">
-      <section class="documento-pasta">
-        <div class="carimbo-topo">RELATÓRIO DE OCORRÊNCIA</div>
-        
-        <div class="secao-doc">
-          <h3>Descrição do Incidente</h3>
-          <p id="descricao-caso">A carregar detalhes do relatório...</p>
-        </div>
-
-        <div class="secao-doc">
-          <h3>Pistas Coletadas na Cena do Crime</h3>
-          <ul id="lista-pistas" class="lista-pistas">
-            <!-- Pistas dinâmicas -->
-          </ul>
-        </div>
-
-        <div class="secao-doc">
-          <h3>Depoimentos & Testemunhas</h3>
-          <div id="lista-depoimentos" class="container-depoimentos">
-            <!-- Depoimentos dinâmicos -->
-          </div>
-        </div>
+      <section class="documento-pasta" id="container-conteudo-caso">
+        <!-- O conteúdo será injetado dinamicamente via JS com base no tipo_layout -->
       </section>
 
       <section class="painel-mandado">
@@ -47,22 +31,42 @@
 
         <form id="form-mandado" class="form-mandado">
           <label for="input-suspeito">Nome do Pokémon Suspeito:</label>
-          <input 
+          <div class="input-autocomplete-wrapper">
+            <input 
             type="text" 
             id="input-suspeito" 
             placeholder="Ex: Haunter, Magmar, Pikachu..." 
             required 
-            autocomplete="off"
           />
-
+            <ul id="sugestoes-lista" class="sugestoes-lista oculto"></ul>
+          </div>
+          
           <button type="submit" class="btn-emitir-mandado">EXECUTAR MANDADO</button>
         </form>
 
       </section>
+
+      <div id="modal-dossie" class="modal-dossie oculto">
+        <div class="modal-conteudo-dossie">
+          <div class="carimbo-topo">DOSSIÊ CONFIDENCIAL DE SUSPEITO</div>
+
+          <div class="dossie-info-centro">
+            <img id="dossie-sprite" src="" alt="Sprite do Suspeito" class="dossie-sprite" />
+            <h3 id="dossie-nome-pokemon">NOME DO POKÉMON</h3>
+            <p class="dossie-aviso">Deseja realmente emitir o Mandado de Prisão Oficial para este suspeito?</p>
+          </div>
+
+          <div class="dossie-botoes">
+            <button type="button" id="btn-cancelar-dossie" class="btn-dossie-cancelar">Continuar Investigando</button>
+            <button type="button" id="btn-confirmar-dossie" class="btn-dossie-confirmar">Confirmar Mandado</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
 
   <script src="/js/investigacao.js"></script>
+  <script src="/js/manualModal.js"></script>
 </body>
 </html>

@@ -1,76 +1,618 @@
 [
   {
     "numero_caso": "CASO #001",
-    "titulo": "O Rastro de Magma no Laboratório",
+    "titulo": "Rastro Escaldante no Galpão",
     "rank": "D",
-    "is_daily": true,
-    "data_daily": "2026-10-01",
     "dificuldade": "Fácil",
     "tipo_layout": "planta_baixa",
-    "relatorio": "Um incidente térmico de grandes proporções destruiu a fiação elétrica do setor de pesquisas avançadas durante a madrugada. O invasor derreteu fechaduras de liga metálica reforçada e deixou marcas incandescentes no solo antes de escapar pelos dutos de ventilação.",
-    "horas_iniciais": 100,
+    "imagem_mapa": "/img/galpao_industrial.jpg",
+    "relatorio": "Um depósito abandonado apresentou superaquecimento repentino e marcas de fuligem no chão sem foco de incêndio comum.",
+    "horas_iniciais": 55,
     "pokemon_correto": "slugma",
     "pistas": [
       {
         "id_pista": "pista_1",
-        "nome": "Visão Térmica na Fiação",
-        "custo_horas": 20,
-        "descricao_revelada": "O corpo do suspeito derreteu a fiação e atinge temperaturas próximas de 10.000°C.",
-        "coordenadas_ou_alvo": "top: 30%, left: 40%"
+        "nome": "Poça de Escória Quente",
+        "lente": "termico",
+        "custo_horas": 10,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Alta assinatura térmica concentrada em um rastro viscoso que esfriou parcialmente — matéria densa e incandescente.",
+        "coordenadas_ou_alvo": "top: 35%; left: 45%;"
       },
       {
         "id_pista": "pista_2",
-        "nome": "Pegadas de Fluidos Viscosos",
-        "custo_horas": 15,
-        "descricao_revelada": "Não foram encontradas marcas de patas, apenas um rastro contínuo de lava espessa e viscosa.",
-        "coordenadas_ou_alvo": "top: 60%, left: 50%"
-      }
-    ],
-    "depoimentos": [
-      {
-        "testemunha": "Guarda do Turno da Noite",
-        "texto": "Vi um brilho avermelhado intenso sob a porta antes do alarme soar. O calor era insuportável mesmo a metros de distância."
+        "nome": "Respingo Mineral sob Luz UV",
+        "lente": "uv",
+        "custo_horas": 10,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Vestígios de escória vitrificada e cinza escura ao redor do rastro quente — mesma substância fundida da poça.",
+        "coordenadas_ou_alvo": "top: 65%; left: 30%;"
       },
       {
-        "testemunha": "Pesquisador Chefe",
-        "texto": "Nenhum equipamento foi roubado, mas o infrator deslizou por cima da mesa principal transformando os computadores em escória derretida."
+        "id_pista": "pista_3",
+        "nome": "Marca de Arrasto no Piso",
+        "lente": "impacto",
+        "custo_horas": 10,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Sulco contínuo e uniforme no chão sem marca de patas ou passos, sugerindo corpo maleável e fluido.",
+        "coordenadas_ou_alvo": "top: 25%; left: 70%;"
+      }
+    ],
+    "correlacoes": {
+      "pista_1+pista_2": {
+        "texto": "🔥 <strong>Análise Térmico-UV:</strong> A retenção de calor intensa (Térmica) e os respingos vitrificados de cinza (UV) indicam fonte de calor extremo ligada a matéria ígnea.",
+        "cor": "#8b0000"
+      },
+      "pista_1+pista_3": {
+        "texto": "🧪 <strong>Análise Biomecânica:</strong> O rastro contínuo sem pegadas (Impacto) junto à massa incandescente (Térmica) indica deslocamento por arrasto de corpo sem membros.",
+        "cor": "#6f42c1"
+      }
+    },
+    "depoimentos": [
+      {
+        "testemunha": "Vigia Noturno",
+        "texto": "O ar ficou pesado de repente e ouvi um chiado úmido arrastando-se pelo piso de concreto."
       }
     ]
   },
   {
     "numero_caso": "CASO #002",
-    "titulo": "Documento Criptografado da Pokedex",
+    "titulo": "Sussurros na Capela Antiga",
     "rank": "D",
-    "is_daily": false,
-    "dificuldade": "Média",
+    "dificuldade": "Fácil",
     "tipo_layout": "documento_secreto",
-    "relatorio": "Registros confidenciais da Pokédex regional foram corrompidos por uma presença espectral. A equipe de segurança cibernética interceptou frequências psíquicas estranhas acompanhadas por quedas súbitas e drásticas na temperatura do arquivo central.",
-    "horas_iniciais": 100,
+    "relatorio": "Um relatório de ronda menciona quedas bruscas de temperatura e risadas abafadas na capela. Parte do registro veio rasurada com [TARJA:tarja_1] e [TARJA:tarja_2].",
+    "anexo_ultrassecreto": "Nota de Campo: O vulto não deixava pegadas, ria em tom grave e parecia ganhar densidade nas sombras.",
+    "horas_iniciais": 55,
     "pokemon_correto": "haunter",
     "pistas": [
       {
         "id_pista": "tarja_1",
-        "nome": "Decodificar Trecho da Língua",
-        "custo_horas": 25,
-        "descricao_revelada": "Diz-se que a sua língua é feita de gás e causa paralisia na vítima até a morte.",
-        "coordenadas_ou_alvo": "linha-1"
+        "nome": "Natureza do Fenômeno",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "espectral",
+        "descricao_revelada": "fenômeno de natureza espectral associado a frio repentino e vultos",
+        "opcoes_giro": ["eletrico", "espectral", "terrestre", "psiquico"],
+        "dica_contexto": "Qual adjetivo define ocorrências ligadas a aparições e calafrios?"
       },
       {
         "id_pista": "tarja_2",
-        "nome": "Decodificar Habilidade de Sombra",
-        "custo_horas": 20,
-        "descricao_revelada": "Esconde-se na escuridão absoluta. Se você sentir um calafrio repentino, ele está por perto.",
-        "coordenadas_ou_alvo": "linha-2"
+        "nome": "Forma Física Observada",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "gasosa",
+        "descricao_revelada": "corpo de consistência gasosa, sem contorno sólido rígido",
+        "opcoes_giro": ["solida", "gasosa", "cristalina", "metalica"],
+        "dica_contexto": "Qual estado físico descreve algo leve, difuso e sem forma fixa?"
       }
     ],
     "depoimentos": [
       {
-        "testemunha": "Analista de Dados",
-        "texto": "Antes do monitor apagar, ouvi uma risada ecoando de dentro das paredes da sala dos servidores."
+        "testemunha": "Zelador",
+        "texto": "A chama da vela oscilou e sumiu num sopro frio, seguida por um riso ecoando perto do altar."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #003",
+    "titulo": "O Furto das Pedras Brutas",
+    "rank": "C",
+    "dificuldade": "Média",
+    "tipo_layout": "interrogatorio_confronto",
+    "relatorio": "Gemas brutas sumiram da sala de triagem mineral. Duas pessoas estavam no setor e apresentaram relatos conflitantes.",
+    "horas_iniciais": 70,
+    "pokemon_correto": "sableye",
+    "confrontos_corretos": [
+      {
+        "id_par": "par_1",
+        "frase_a_id": "minerador_1",
+        "frase_b_id": "guarda_2",
+        "pista_id": "contradicao_1",
+        "feedback_contradicao": "Contradição de horário e entrega da chave confirmada!"
       },
       {
-        "testemunha": "Agente de Limpeza",
-        "texto": "Senti um arrepio congelante na espinha e vi uma sombra flutuante destacada contra a parede antes de perder a consciência momentaneamente."
+        "id_par": "par_2",
+        "frase_a_id": "minerador_3",
+        "frase_b_id": "guarda_4",
+        "pista_id": "contradicao_2",
+        "feedback_contradicao": "Contradição sobre o manuseio das gemas confirmada!"
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Geólogo Auxiliar",
+        "papel": "Pesquisador do Turno",
+        "frases": [
+          {
+            "id": "minerador_1",
+            "texto": "Tranquei a porta da sala de gemas às 22h e deixei a chave na guarita."
+          },
+          {
+            "id": "minerador_2",
+            "texto": "As caixas de quartzo comum ficaram intactas na prateleira."
+          },
+          {
+            "id": "minerador_3",
+            "texto": "Vi uma silhueta baixa e corcunda mordiscando cristais reluzentes no escuro."
+          },
+          {
+            "id": "minerador_4",
+            "texto": "O alarme sonoro não disparou naquela noite."
+          }
+        ]
+      },
+      {
+        "testemunha": "Guarda da Portaria",
+        "papel": "Segurança Noturno",
+        "frases": [
+          {
+            "id": "guarda_1",
+            "texto": "A janela dos fundos tinha grades firmes."
+          },
+          {
+            "id": "guarda_2",
+            "texto": "A chave nunca esteve na guarita às 22h; o geólogo saiu da sala carregando uma mochila pesada às 22h15."
+          },
+          {
+            "id": "guarda_3",
+            "texto": "A lanterna da ronda falhou perto do corredor leste."
+          },
+          {
+            "id": "guarda_4",
+            "texto": "Ninguém ingeriu nada lá dentro; o suspeito apenas recolheu as gemas sem levá-las à boca."
+          }
+        ]
+      }
+    ],
+    "pistas": [
+      {
+        "id_pista": "contradicao_1",
+        "nome": "Álibi Incompatível na Sala",
+        "custo_horas": 15,
+        "descricao_revelada": "O horário de saída e o paradeiro da chave não coincidem, indicando omissão sobre o que ocorreu na sala."
+      },
+      {
+        "id_pista": "contradicao_2",
+        "nome": "Consumo de Cristais na Penumbra",
+        "custo_horas": 15,
+        "descricao_revelada": "Há indícios de ingestão de minerais brilhantes em ambiente escuro e postura baixa/encurvada."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #004",
+    "titulo": "Análise de Toxinas no Laboratório",
+    "rank": "B",
+    "dificuldade": "Difícil",
+    "tipo_layout": "laboratorio",
+    "relatorio": "Um pólen denso e adocicado causou tontura severa em funcionários da estufa botânica. Isole as amostras na bancada e cruze os resultados na Matriz Biométrica.",
+    "horas_iniciais": 75,
+    "pokemon_correto": "vileplume",
+    "amostras_laboratorio": [
+      {
+        "id_amostra": "amostra_1",
+        "nome": "Esporos de Pétala Escura",
+        "tipo_estacao": "reagentes",
+        "descricao": "Pó fino arroxeado com alcaloides termossensíveis e reação levemente ácida.",
+        "reagente_correto": "base_fria",
+        "resultado_quimico": "Composto alcaloide estabilizado a frio sem degradação celular.",
+        "pista_id_gerada": "espectro_1"
+      },
+      {
+        "id_amostra": "amostra_2",
+        "nome": "Pulso Acústico da Flor",
+        "tipo_estacao": "ondas",
+        "descricao": "Vibração rítmica de média-baixa frequência associada à dispersão de partículas densas.",
+        "frequencia_correta": 45,
+        "resultado_fisico": "Ressonância estável em 45 Hz compatível com emissão de esporos pesados.",
+        "pista_id_gerada": "espectro_2"
+      }
+    ],
+    "pistas": [
+      {
+        "id_pista": "master_lab",
+        "nome": "Assinatura Biológica e Acústica",
+        "custo_horas": 20,
+        "descricao_revelada": "Alcaloides vegetais preservados e pulso grave em 45 Hz sugerem organismo botânico de corola ampla com liberação de esporos."
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Botânico Chefe",
+        "texto": "O cheiro parecia adocicado no início, mas logo deixou o ar pesado e causou letargia."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #005",
+    "titulo": "O Desaparecimento das Moedas Douradas",
+    "rank": "D",
+    "dificuldade": "Fácil",
+    "tipo_layout": "padrao",
+    "relatorio": "Moedas antigas sumiram de uma feira noturna em sequência rápida, deixando sulcos finos em caixotes de madeira.",
+    "horas_iniciais": 50,
+    "pokemon_correto": "meowth",
+    "pistas": [
+      {
+        "id_pista": "pista_1",
+        "nome": "Sulcos em Madeira Macia",
+        "custo_horas": 10,
+        "descricao_revelada": "Riscos paralelos e estreitos na madeira, compatíveis com unhas/garras curtas de um animal de pequeno porte."
+      },
+      {
+        "id_pista": "pista_2",
+        "nome": "Seleção de Itens Metálicos",
+        "custo_horas": 10,
+        "descricao_revelada": "Apenas moedas e peças cunhadas desapareceram, sem mexer em frutas, caixas ou lonas."
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Feirante",
+        "texto": "Foi num piscar de olhos; só ouvi o som metálico das moedas tilintando enquanto algo corria para o beco."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #006",
+    "titulo": "Apagão na Subestação Central",
+    "rank": "C",
+    "dificuldade": "Média",
+    "tipo_layout": "planta_baixa",
+    "imagem_mapa": "/img/subestacao_eletrica.jpg",
+    "relatorio": "Uma queda abrupta de energia drenou os geradores sem romper cabos externos. Há 5 pontos na planta: cruze vestígios de lentes diferentes que tratem do mesmo aspecto do caso.",
+    "horas_iniciais": 95,
+    "pokemon_correto": "electabuzz",
+    "pistas": [
+      {
+        "id_pista": "pista_1",
+        "nome": "Vazamento de Óleo Antigo",
+        "lente": "termico",
+        "custo_horas": 10,
+        "tipo_pista": "ruido",
+        "descricao_revelada": "Mancha de graxa ressecada há semanas sobre a canaleta — sem aquecimento recente nem relação com o apagão.",
+        "coordenadas_ou_alvo": "top: 52%; left: 78%;"
+      },
+      {
+        "id_pista": "pista_2",
+        "nome": "Descarga Estática no Piso",
+        "lente": "uv",
+        "custo_horas": 15,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Marcas ionizadas e rastros de alta carga elétrica sobre o piso próximo aos transformadores.",
+        "coordenadas_ou_alvo": "top: 22%; left: 18%;"
+      },
+      {
+        "id_pista": "pista_3",
+        "nome": "Alavanca de Disjuntor Torcida",
+        "lente": "impacto",
+        "custo_horas": 15,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "A barra metálica do disjuntor sofreu torção mecânica severa, exigindo força física considerável.",
+        "coordenadas_ou_alvo": "top: 82%; left: 62%;"
+      },
+      {
+        "id_pista": "pista_4",
+        "nome": "Núcleo de Transformador Drenado",
+        "lente": "termico",
+        "custo_horas": 15,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Queda brusca de carga e assinatura térmica residual nos bobinados após o corte de energia.",
+        "coordenadas_ou_alvo": "top: 68%; left: 16%;"
+      },
+      {
+        "id_pista": "pista_5",
+        "nome": "Resíduo de Contato Pesado",
+        "lente": "uv",
+        "custo_horas": 15,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Marca de apoio e atrito firme na fuligem junto ao painel, compatível com postura bípede/humanoide pesada.",
+        "coordenadas_ou_alvo": "top: 18%; left: 82%;"
+      }
+    ],
+    "correlacoes": {
+      "pista_2+pista_4": {
+        "texto": "⚡ <strong>Análise Energética:</strong> A descarga ionizada (UV) e a drenagem abrupta do núcleo (Térmica) indicam descarga/absorção de alta tensão.",
+        "cor": "#155724"
+      },
+      "pista_3+pista_5": {
+        "texto": "🧪 <strong>Análise Morfológica:</strong> A torção mecânica no disjuntor (Impacto) e o apoio firme na fuligem (UV) apontam para porte robusto e braços fortes.",
+        "cor": "#6f42c1"
+      }
+    },
+    "depoimentos": [
+      {
+        "testemunha": "Engenheiro de Plantão",
+        "texto": "Ouvi um estalo seco e um zumbido elétrico grave antes de ver um vulto listrado recuar da área dos geradores."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #007",
+    "titulo": "Contrabando no Expresso Noturno",
+    "rank": "B",
+    "dificuldade": "Difícil",
+    "tipo_layout": "interrogatorio_confronto",
+    "relatorio": "Um cofre blindado foi aberto no trem noturno sem disparar alarmes. Três pessoas deram depoimentos; há várias contradições, mas nem todas revelam uma pista real.",
+    "horas_iniciais": 85,
+    "pokemon_correto": "zoroark",
+    "confrontos_corretos": [
+      {
+        "id_par": "par_1",
+        "frase_a_id": "maquinista_1",
+        "frase_b_id": "seguranca_2",
+        "pista_id": "contradicao_1",
+        "feedback_contradicao": "Contradição de paradeiro: relatos incompatíveis sobre o inspetor chefe!"
+      },
+      {
+        "id_par": "par_2",
+        "frase_a_id": "maquinista_3",
+        "frase_b_id": "seguranca_3",
+        "pista_id": "contradicao_2",
+        "feedback_contradicao": "Contradição de deslocamento: a passagem pelo túnel não bate!"
+      },
+      {
+        "id_par": "par_3",
+        "frase_a_id": "seguranca_1",
+        "frase_b_id": "comissaria_1",
+        "pista_id": null,
+        "feedback_contradicao": "Há divergência sobre a fechadura/trinco, mas isso não gera uma pista nova para o caso."
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Maquinista do Trem",
+        "papel": "Condução",
+        "frases": [
+          {
+            "id": "maquinista_1",
+            "texto": "O inspetor chefe entrou na cabine às 03:15 para conferir o manifesto e saiu em seguida."
+          },
+          {
+            "id": "maquinista_2",
+            "texto": "Não houve parada não programada até o túnel da serra."
+          },
+          {
+            "id": "maquinista_3",
+            "texto": "No túnel, vi um vulto escuro de pelagem longa e volumosa saltando entre os vagões."
+          }
+        ]
+      },
+      {
+        "testemunha": "Segurança do Vagão",
+        "papel": "Escolta",
+        "frases": [
+          {
+            "id": "seguranca_1",
+            "texto": "A fechadura externa do cofre não apresentava marcas de arrombamento."
+          },
+          {
+            "id": "seguranca_2",
+            "texto": "O inspetor chefe esteve trancado comigo no vagão-restaurante das 03:00 ao fim da viagem."
+          },
+          {
+            "id": "seguranca_3",
+            "texto": "Ninguém caberia no teto dentro do túnel estreito."
+          }
+        ]
+      },
+      {
+        "testemunha": "Comissária de Bordo",
+        "papel": "Atendimento do Vagão",
+        "frases": [
+          {
+            "id": "comissaria_1",
+            "texto": "Ouvi o trinco metálico do cofre estalar pouco antes das luzes do corredor piscarem."
+          },
+          {
+            "id": "comissaria_2",
+            "texto": "O serviço de bebidas foi encerrado às 02:50."
+          }
+        ]
+      }
+    ],
+    "pistas": [
+      {
+        "id_pista": "contradicao_1",
+        "nome": "Inconsistência de Identidade",
+        "custo_horas": 15,
+        "descricao_revelada": "Os horários e locais indicam que alguém se passou pelo inspetor chefe, sugerindo disfarce ou ilusão convincente."
+      },
+      {
+        "id_pista": "contradicao_2",
+        "nome": "Movimentação no Túnel",
+        "custo_horas": 15,
+        "descricao_revelada": "O relato da movimentação ágil no túnel aponta para criatura bípede de porte médio e cabeleira/juba marcante."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #008",
+    "titulo": "Protocolo Ômega: Dossiê Interceptado",
+    "rank": "A",
+    "dificuldade": "Muito Difícil",
+    "tipo_layout": "documento_secreto",
+    "relatorio": "Registro confidencial de contenção quebrada. O documento exige decifrar quatro trechos: [TARJA:tarja_1], [TARJA:tarja_2], [TARJA:tarja_3] e [TARJA:tarja_4].",
+    "anexo_ultrassecreto": "Arquivo Nível A: Espécime gerado em laboratório a partir de código genético antigo, com postura ereta, cauda longa e forte projeção mental.",
+    "horas_iniciais": 100,
+    "pokemon_correto": "mewtwo",
+    "pistas": [
+      {
+        "id_pista": "tarja_1",
+        "nome": "Energia de Ruptura",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "telecinese",
+        "descricao_revelada": "Bloqueio rompido por projeção de telecinese sem contato físico",
+        "opcoes_giro": ["telecinese", "magnetismo", "combustao", "ressonancia"],
+        "dica_contexto": "Capacidade de mover ou romper objetos à distância apenas pela força mental."
+      },
+      {
+        "id_pista": "tarja_2",
+        "nome": "Base de Clonagem",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "genoma",
+        "descricao_revelada": "Sequência de genoma alterada em laboratório a partir de amostra ancestral",
+        "opcoes_giro": ["genoma", "sintese", "enzima", "isotopo"],
+        "dica_contexto": "Conjunto completo do material genético de um organismo."
+      },
+      {
+        "id_pista": "tarja_3",
+        "nome": "Assinatura de Campo",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "psiquico",
+        "descricao_revelada": "Assinatura energética compatível com o campo psíquico",
+        "opcoes_giro": ["psiquico", "metalico", "draconico", "venenoso"],
+        "dica_contexto": "Classificação associada a percepção extra-sensorial e manipulação mental."
+      },
+      {
+        "id_pista": "tarja_4",
+        "nome": "Origem Laboratorial",
+        "custo_horas": 15,
+        "palavra_chave_resposta": "artificial",
+        "descricao_revelada": "Espécime de origem artificial obtido por engenharia em cativeiro",
+        "opcoes_giro": ["artificial", "fossal", "primordial", "selvagem"],
+        "dica_contexto": "Criado ou modificado por intervenção técnica, fora da natureza."
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Pesquisador Aposentado",
+        "texto": "Nenhuma barreira mecânica conteve o espécime quando ele decidiu forçar a passagem."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #009",
+    "titulo": "Anomalia Cristalina na Cratera",
+    "rank": "A",
+    "dificuldade": "Muito Difícil",
+    "tipo_layout": "laboratorio",
+    "relatorio": "Fragmentos de rocha densa, resíduos cristalinos e vibrações sísmicas foram coletados após o desabamento subterrâneo. Analise todas as amostras antes de cruzar na Matriz Biométrica.",
+    "horas_iniciais": 100,
+    "pokemon_correto": "tyranitar",
+    "amostras_laboratorio": [
+      {
+        "id_amostra": "amostra_1",
+        "nome": "Pó de Rocha Sedimentar Densa",
+        "tipo_estacao": "reagentes",
+        "descricao": "Sedimento mineral rígido com alta resistência mecânica e traços calcários.",
+        "reagente_correto": "acido_forte",
+        "resultado_quimico": "Matriz calcária dissolvida sob ácido forte, expondo núcleo mineral denso.",
+        "pista_id_gerada": "espectro_1"
+      },
+      {
+        "id_amostra": "amostra_2",
+        "nome": "Ressonância Sísmica Profunda",
+        "tipo_estacao": "ondas",
+        "descricao": "Vibração de baixa frequência registrada no solo antes do colapso.",
+        "frequencia_correta": 20,
+        "resultado_fisico": "Pico estável em 20 Hz associado a impacto terrestre de grande massa.",
+        "pista_id_gerada": "espectro_2"
+      },
+      {
+        "id_amostra": "amostra_3",
+        "nome": "Cristal Escuro Abrasivo",
+        "tipo_estacao": "reagentes",
+        "descricao": "Resíduo apolar e aderente com forte brilho opaco e comportamento noturno.",
+        "reagente_correto": "solventes",
+        "resultado_quimico": "Camada apolar diluída por solvente volátil sem alterar o núcleo cristalino.",
+        "pista_id_gerada": "espectro_3"
+      }
+    ],
+    "pistas": [
+      {
+        "id_pista": "master_lab",
+        "nome": "Assinatura Material Definitiva",
+        "custo_horas": 20,
+        "descricao_revelada": "Carapaça mineral de alta dureza, tremor em 20 Hz e resíduo apolar sombrio indicam criatura massiva e destrutiva."
+      }
+    ],
+    "depoimentos": [
+      {
+        "testemunha": "Geólogo Chefe",
+        "texto": "O tremor veio acompanhado de estalos secos de rocha cedendo sob um peso descomunal."
+      }
+    ]
+  },
+  {
+    "numero_caso": "CASO #010",
+    "titulo": "O Eclipse das Dimensões",
+    "rank": "S",
+    "dificuldade": "Extrema",
+    "tipo_layout": "planta_baixa",
+    "imagem_mapa": "/img/observatorio_dimensional.jpg",
+    "relatorio": "Ruptura espacial no domo do observatório drenou a luz e deixou cristais escuros. Há 6 pontos espalhados — cruze vestígios de lentes diferentes que se complementem.",
+    "horas_iniciais": 135,
+    "pokemon_correto": "necrozma",
+    "pistas": [
+      {
+        "id_pista": "pista_1",
+        "nome": "Calor Residual de Lâmpada",
+        "lente": "termico",
+        "custo_horas": 15,
+        "tipo_pista": "ruido",
+        "descricao_revelada": "Aquecimento rotineiro do projetor auxiliar da cúpula, ligado durante toda a noite.",
+        "coordenadas_ou_alvo": "top: 24%; left: 32%;"
+      },
+      {
+        "id_pista": "pista_2",
+        "nome": "Refração Prismática Residual",
+        "lente": "uv",
+        "custo_horas": 20,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Luz UV revela feixes desviados em ângulos prismáticos, como se a luz tivesse sido refratada por um cristal.",
+        "coordenadas_ou_alvo": "top: 46%; left: 84%;"
+      },
+      {
+        "id_pista": "pista_3",
+        "nome": "Fissura Gravitacional no Piso",
+        "lente": "impacto",
+        "custo_horas": 20,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Mármore estilhaçado de dentro para fora sem golpe externo, indicando anomalia ou fenda espacial.",
+        "coordenadas_ou_alvo": "top: 78%; left: 22%;"
+      },
+      {
+        "id_pista": "pista_4",
+        "nome": "Marca de Tinta Fluorescente",
+        "lente": "uv",
+        "custo_horas": 15,
+        "tipo_pista": "ruido",
+        "descricao_revelada": "Sinalização antiga de manutenção pintada no rodapé há meses.",
+        "coordenadas_ou_alvo": "top: 16%; left: 72%;"
+      },
+      {
+        "id_pista": "pista_5",
+        "nome": "Vácuo Luminoso e Térmico",
+        "lente": "termico",
+        "custo_horas": 20,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Queda extrema de energia luminosa e térmica no centro do salão — perda abrupta de luminosidade ambiente.",
+        "coordenadas_ou_alvo": "top: 85%; left: 68%;"
+      },
+      {
+        "id_pista": "pista_6",
+        "nome": "Rastro Luminescente de Distorção no Trilho",
+        "lente": "uv",
+        "custo_horas": 20,
+        "tipo_pista": "evidencia",
+        "descricao_revelada": "Sob luz UV, o trilho metálico apresenta halo residual de torção dimensional no ponto da fenda.",
+        "coordenadas_ou_alvo": "top: 52%; left: 14%;"
+      }
+    ],
+    "correlacoes": {
+      "pista_2+pista_5": {
+        "texto": "🌑 <strong>Análise Óptica:</strong> A refração prismática (UV) somada ao vácuo luminoso/térmico (Térmica) indica absorção ou desvio intenso de luz.",
+        "cor": "#155724"
+      },
+      "pista_3+pista_6": {
+        "texto": "🌀 <strong>Análise Espacial:</strong> A fissura gravitacional no piso (Impacto) e o halo de distorção no trilho (UV) confirmam instabilidade dimensional.",
+        "cor": "#0284c7"
+      }
+    },
+    "depoimentos": [
+      {
+        "testemunha": "Diretora do Observatório",
+        "texto": "A luminosidade do salão caiu de uma só vez quando uma estrutura facetada e escura se manifestou ao centro."
       }
     ]
   }
