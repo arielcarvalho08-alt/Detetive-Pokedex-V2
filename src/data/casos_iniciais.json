@@ -7,7 +7,7 @@
     "tipo_layout": "planta_baixa",
     "imagem_mapa": "/img/galpao_industrial.jpg",
     "relatorio": "Um depósito abandonado apresentou superaquecimento repentino e marcas de fuligem no chão sem foco de incêndio comum.",
-    "horas_iniciais": 55,
+    "horas_iniciais": 42,
     "pokemon_correto": "slugma",
     "pistas": [
       {
@@ -63,13 +63,13 @@
     "tipo_layout": "documento_secreto",
     "relatorio": "Um relatório de ronda menciona quedas bruscas de temperatura e risadas abafadas na capela. Parte do registro veio rasurada com [TARJA:tarja_1] e [TARJA:tarja_2].",
     "anexo_ultrassecreto": "Nota de Campo: O vulto não deixava pegadas, ria em tom grave e parecia ganhar densidade nas sombras.",
-    "horas_iniciais": 55,
+    "horas_iniciais": 45,
     "pokemon_correto": "haunter",
     "pistas": [
       {
         "id_pista": "tarja_1",
         "nome": "Natureza do Fenômeno",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "espectral",
         "descricao_revelada": "fenômeno de natureza espectral associado a frio repentino e vultos",
         "opcoes_giro": ["eletrico", "espectral", "terrestre", "psiquico"],
@@ -78,7 +78,7 @@
       {
         "id_pista": "tarja_2",
         "nome": "Forma Física Observada",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "gasosa",
         "descricao_revelada": "corpo de consistência gasosa, sem contorno sólido rígido",
         "opcoes_giro": ["solida", "gasosa", "cristalina", "metalica"],
@@ -99,7 +99,7 @@
     "dificuldade": "Média",
     "tipo_layout": "interrogatorio_confronto",
     "relatorio": "Gemas brutas sumiram da sala de triagem mineral. Duas pessoas estavam no setor e apresentaram relatos conflitantes.",
-    "horas_iniciais": 70,
+    "horas_iniciais": 55,
     "pokemon_correto": "sableye",
     "confrontos_corretos": [
       {
@@ -167,13 +167,13 @@
       {
         "id_pista": "contradicao_1",
         "nome": "Álibi Incompatível na Sala",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "descricao_revelada": "O horário de saída e o paradeiro da chave não coincidem, indicando omissão sobre o que ocorreu na sala."
       },
       {
         "id_pista": "contradicao_2",
         "nome": "Consumo de Cristais na Penumbra",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "descricao_revelada": "Há indícios de ingestão de minerais brilhantes em ambiente escuro e postura baixa/encurvada."
       }
     ]
@@ -185,13 +185,14 @@
     "dificuldade": "Difícil",
     "tipo_layout": "laboratorio",
     "relatorio": "Um pólen denso e adocicado causou tontura severa em funcionários da estufa botânica. Isole as amostras na bancada e cruze os resultados na Matriz Biométrica.",
-    "horas_iniciais": 75,
+    "horas_iniciais": 60,
     "pokemon_correto": "vileplume",
     "amostras_laboratorio": [
       {
         "id_amostra": "amostra_1",
         "nome": "Esporos de Pétala Escura",
         "tipo_estacao": "reagentes",
+        "custo_horas": 10,
         "descricao": "Pó fino arroxeado com alcaloides termossensíveis e reação levemente ácida.",
         "reagente_correto": "base_fria",
         "resultado_quimico": "Composto alcaloide estabilizado a frio sem degradação celular.",
@@ -201,6 +202,7 @@
         "id_amostra": "amostra_2",
         "nome": "Pulso Acústico da Flor",
         "tipo_estacao": "ondas",
+        "custo_horas": 10,
         "descricao": "Vibração rítmica de média-baixa frequência associada à dispersão de partículas densas.",
         "frequencia_correta": 45,
         "resultado_fisico": "Ressonância estável em 45 Hz compatível com emissão de esporos pesados.",
@@ -211,7 +213,7 @@
       {
         "id_pista": "master_lab",
         "nome": "Assinatura Biológica e Acústica",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "descricao_revelada": "Alcaloides vegetais preservados e pulso grave em 45 Hz sugerem organismo botânico de corola ampla com liberação de esporos."
       }
     ],
@@ -229,7 +231,7 @@
     "dificuldade": "Fácil",
     "tipo_layout": "padrao",
     "relatorio": "Moedas antigas sumiram de uma feira noturna em sequência rápida, deixando sulcos finos em caixotes de madeira.",
-    "horas_iniciais": 50,
+    "horas_iniciais": 40,
     "pokemon_correto": "meowth",
     "pistas": [
       {
@@ -260,7 +262,7 @@
     "tipo_layout": "planta_baixa",
     "imagem_mapa": "/img/subestacao_eletrica.jpg",
     "relatorio": "Uma queda abrupta de energia drenou os geradores sem romper cabos externos. Há 5 pontos na planta: cruze vestígios de lentes diferentes que tratem do mesmo aspecto do caso.",
-    "horas_iniciais": 95,
+    "horas_iniciais": 70,
     "pokemon_correto": "electabuzz",
     "pistas": [
       {
@@ -333,7 +335,7 @@
     "dificuldade": "Difícil",
     "tipo_layout": "interrogatorio_confronto",
     "relatorio": "Um cofre blindado foi aberto no trem noturno sem disparar alarmes. Três pessoas deram depoimentos; há várias contradições, mas nem todas revelam uma pista real.",
-    "horas_iniciais": 85,
+    "horas_iniciais": 65,
     "pokemon_correto": "zoroark",
     "confrontos_corretos": [
       {
@@ -414,13 +416,13 @@
       {
         "id_pista": "contradicao_1",
         "nome": "Inconsistência de Identidade",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "descricao_revelada": "Os horários e locais indicam que alguém se passou pelo inspetor chefe, sugerindo disfarce ou ilusão convincente."
       },
       {
         "id_pista": "contradicao_2",
         "nome": "Movimentação no Túnel",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "descricao_revelada": "O relato da movimentação ágil no túnel aponta para criatura bípede de porte médio e cabeleira/juba marcante."
       }
     ]
@@ -433,13 +435,13 @@
     "tipo_layout": "documento_secreto",
     "relatorio": "Registro confidencial de contenção quebrada. O documento exige decifrar quatro trechos: [TARJA:tarja_1], [TARJA:tarja_2], [TARJA:tarja_3] e [TARJA:tarja_4].",
     "anexo_ultrassecreto": "Arquivo Nível A: Espécime gerado em laboratório a partir de código genético antigo, com postura ereta, cauda longa e forte projeção mental.",
-    "horas_iniciais": 100,
+    "horas_iniciais": 80,
     "pokemon_correto": "mewtwo",
     "pistas": [
       {
         "id_pista": "tarja_1",
         "nome": "Energia de Ruptura",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "telecinese",
         "descricao_revelada": "Bloqueio rompido por projeção de telecinese sem contato físico",
         "opcoes_giro": ["telecinese", "magnetismo", "combustao", "ressonancia"],
@@ -448,7 +450,7 @@
       {
         "id_pista": "tarja_2",
         "nome": "Base de Clonagem",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "genoma",
         "descricao_revelada": "Sequência de genoma alterada em laboratório a partir de amostra ancestral",
         "opcoes_giro": ["genoma", "sintese", "enzima", "isotopo"],
@@ -457,7 +459,7 @@
       {
         "id_pista": "tarja_3",
         "nome": "Assinatura de Campo",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "psiquico",
         "descricao_revelada": "Assinatura energética compatível com o campo psíquico",
         "opcoes_giro": ["psiquico", "metalico", "draconico", "venenoso"],
@@ -466,7 +468,7 @@
       {
         "id_pista": "tarja_4",
         "nome": "Origem Laboratorial",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "palavra_chave_resposta": "artificial",
         "descricao_revelada": "Espécime de origem artificial obtido por engenharia em cativeiro",
         "opcoes_giro": ["artificial", "fossal", "primordial", "selvagem"],
@@ -487,13 +489,14 @@
     "dificuldade": "Muito Difícil",
     "tipo_layout": "laboratorio",
     "relatorio": "Fragmentos de rocha densa, resíduos cristalinos e vibrações sísmicas foram coletados após o desabamento subterrâneo. Analise todas as amostras antes de cruzar na Matriz Biométrica.",
-    "horas_iniciais": 100,
+    "horas_iniciais": 75,
     "pokemon_correto": "tyranitar",
     "amostras_laboratorio": [
       {
         "id_amostra": "amostra_1",
         "nome": "Pó de Rocha Sedimentar Densa",
         "tipo_estacao": "reagentes",
+        "custo_horas": 10,
         "descricao": "Sedimento mineral rígido com alta resistência mecânica e traços calcários.",
         "reagente_correto": "acido_forte",
         "resultado_quimico": "Matriz calcária dissolvida sob ácido forte, expondo núcleo mineral denso.",
@@ -503,6 +506,7 @@
         "id_amostra": "amostra_2",
         "nome": "Ressonância Sísmica Profunda",
         "tipo_estacao": "ondas",
+        "custo_horas": 10,
         "descricao": "Vibração de baixa frequência registrada no solo antes do colapso.",
         "frequencia_correta": 20,
         "resultado_fisico": "Pico estável em 20 Hz associado a impacto terrestre de grande massa.",
@@ -512,6 +516,7 @@
         "id_amostra": "amostra_3",
         "nome": "Cristal Escuro Abrasivo",
         "tipo_estacao": "reagentes",
+        "custo_horas": 10,
         "descricao": "Resíduo apolar e aderente com forte brilho opaco e comportamento noturno.",
         "reagente_correto": "solventes",
         "resultado_quimico": "Camada apolar diluída por solvente volátil sem alterar o núcleo cristalino.",
@@ -522,7 +527,7 @@
       {
         "id_pista": "master_lab",
         "nome": "Assinatura Material Definitiva",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "descricao_revelada": "Carapaça mineral de alta dureza, tremor em 20 Hz e resíduo apolar sombrio indicam criatura massiva e destrutiva."
       }
     ],
@@ -541,14 +546,14 @@
     "tipo_layout": "planta_baixa",
     "imagem_mapa": "/img/observatorio_dimensional.jpg",
     "relatorio": "Ruptura espacial no domo do observatório drenou a luz e deixou cristais escuros. Há 6 pontos espalhados — cruze vestígios de lentes diferentes que se complementem.",
-    "horas_iniciais": 135,
+    "horas_iniciais": 100,
     "pokemon_correto": "necrozma",
     "pistas": [
       {
         "id_pista": "pista_1",
         "nome": "Calor Residual de Lâmpada",
         "lente": "termico",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "tipo_pista": "ruido",
         "descricao_revelada": "Aquecimento rotineiro do projetor auxiliar da cúpula, ligado durante toda a noite.",
         "coordenadas_ou_alvo": "top: 24%; left: 32%;"
@@ -557,7 +562,7 @@
         "id_pista": "pista_2",
         "nome": "Refração Prismática Residual",
         "lente": "uv",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "tipo_pista": "evidencia",
         "descricao_revelada": "Luz UV revela feixes desviados em ângulos prismáticos, como se a luz tivesse sido refratada por um cristal.",
         "coordenadas_ou_alvo": "top: 46%; left: 84%;"
@@ -566,7 +571,7 @@
         "id_pista": "pista_3",
         "nome": "Fissura Gravitacional no Piso",
         "lente": "impacto",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "tipo_pista": "evidencia",
         "descricao_revelada": "Mármore estilhaçado de dentro para fora sem golpe externo, indicando anomalia ou fenda espacial.",
         "coordenadas_ou_alvo": "top: 78%; left: 22%;"
@@ -575,7 +580,7 @@
         "id_pista": "pista_4",
         "nome": "Marca de Tinta Fluorescente",
         "lente": "uv",
-        "custo_horas": 15,
+        "custo_horas": 10,
         "tipo_pista": "ruido",
         "descricao_revelada": "Sinalização antiga de manutenção pintada no rodapé há meses.",
         "coordenadas_ou_alvo": "top: 16%; left: 72%;"
@@ -584,7 +589,7 @@
         "id_pista": "pista_5",
         "nome": "Vácuo Luminoso e Térmico",
         "lente": "termico",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "tipo_pista": "evidencia",
         "descricao_revelada": "Queda extrema de energia luminosa e térmica no centro do salão — perda abrupta de luminosidade ambiente.",
         "coordenadas_ou_alvo": "top: 85%; left: 68%;"
@@ -593,7 +598,7 @@
         "id_pista": "pista_6",
         "nome": "Rastro Luminescente de Distorção no Trilho",
         "lente": "uv",
-        "custo_horas": 20,
+        "custo_horas": 15,
         "tipo_pista": "evidencia",
         "descricao_revelada": "Sob luz UV, o trilho metálico apresenta halo residual de torção dimensional no ponto da fenda.",
         "coordenadas_ou_alvo": "top: 52%; left: 14%;"

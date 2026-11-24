@@ -8,53 +8,64 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const dados = JSON.parse(resultadoRaw);
 
+  const subtituloCasoEl = document.getElementById('subtitulo-caso-conclusao');
   const tituloVeredito = document.getElementById('titulo-veredito');
   const badgeStatus = document.getElementById('badge-status-resultado');
-  
+
   const numPokedex = document.getElementById('pokedex-num');
   const nomePokemon = document.getElementById('pokemon-nome');
   const tiposContainer = document.getElementById('pokemon-tipos');
   const categoriaPokemon = document.getElementById('pokemon-categoria');
   const spriteImg = document.getElementById('pokemon-sprite');
   const spriteLoading = document.getElementById('pokemon-loading');
-  
+
   const mensagemJustificativa = document.getElementById('mensagem-justificativa');
+  const scoreHoras = document.getElementById('score-horas');
+  const scoreBase = document.getElementById('score-base');
   const scoreBonus = document.getElementById('score-bonus');
+  const scoreTotal = document.getElementById('score-total');
   const scoreRank = document.getElementById('score-rank');
 
   const btnAcao = document.getElementById('btn-acao-principal');
   const btnVoltarMesa = document.getElementById('btn-voltar-mesa');
 
-  const eVitória = dados.resultado === 'VITORIA' || dados.correto === true;
+  const eVitoria = dados.resultado === 'VITORIA' || dados.correto === true;
+
+  if (subtituloCasoEl && (dados.numero_caso || dados.titulo_caso)) {
+    subtituloCasoEl.textContent = [dados.numero_caso, dados.titulo_caso].filter(Boolean).join(' • ');
+  }
 
   if (dados.tipoCaso === 'diario') {
     btnVoltarMesa.href = '/diario';
     btnAcao.style.display = 'none';
   } else {
     btnVoltarMesa.href = '/campanha';
-    if (eVitória) {
-      btnAcao.textContent = 'Próximo Caso';
-      btnAcao.href = '/campanha';
+    if (eVitoria) {
+      const proximoId = dados.proximo_caso_id || dados.proximoCasoId;
+      btnAcao.textContent = proximoId ? 'Próximo Caso' : 'Ver Mesa de Casos';
+      btnAcao.href = proximoId ? `/investigacao?id=${proximoId}` : '/campanha';
     } else {
       btnAcao.textContent = 'Tentar Novamente';
-      btnAcao.href = `/investigacao?id=${dados.casoId || ''}`;
+      btnAcao.href = dados.casoId ? `/investigacao?id=${dados.casoId}` : '/campanha';
     }
   }
 
-  const pokemonAlvo = dados.pokemon || dados.palpite || '';
-  nomePokemon.textContent = pokemonAlvo || 'Desconhecido';
+  const pokemonExibido = eVitoria
+    ? (dados.pokemon || dados.palpite || '')
+    : (dados.palpite || dados.pokemon || '');
 
+  nomePokemon.textContent = pokemonExibido || 'Desconhecido';
   tiposContainer.innerHTML = '';
   categoriaPokemon.textContent = 'Categoria: Carregando...';
 
-  if (pokemonAlvo) {
-    let nomeLimpo = pokemonAlvo
+  if (pokemonExibido) {
+    let nomeLimpo = pokemonExibido
       .trim()
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") 
-      .replace(/['’.:]/g, '')          
-      .replace(/\s+/g, '-');          
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/['’.:]/g, '')
+      .replace(/\s+/g, '-');
 
     if (nomeLimpo === 'nidoran') {
       nomeLimpo = 'nidoran-m';
@@ -99,7 +110,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
           categoriaPokemon.textContent = 'Categoria: Unknown';
         }
-
       } else {
         throw new Error('Pokémon não encontrado na PokéAPI');
       }
@@ -110,21 +120,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  if (eVitória) {
+  const horasRest = Number(dados.horas_restantes ?? dados.horasRestantes ?? 0);
+  const horasInit = Number(dados.horas_iniciais ?? dados.horasIniciais ?? 60);
+  const basePts = Number(dados.pontuacao_base ?? (eVitoria ? 400 : 0));
+  const bonusPts = Number(dados.bonus_tempo ?? (eVitoria ? Math.round((horasRest / Math.max(1, horasInit)) * 400) : 0));
+  const totalPts = Number(dados.pontuacao_final ?? (basePts + bonusPts));
+  const rankObtido = dados.rank_conclusao || (eVitoria ? 'A' : 'F');
+
+  if (scoreHoras) scoreHoras.textContent = `${horasRest}h / ${horasInit}h`;
+  if (scoreBase) scoreBase.textContent = `${basePts} pts`;
+  if (scoreBonus) scoreBonus.textContent = `+${bonusPts} pts`;
+  if (scoreTotal) scoreTotal.textContent = `${totalPts} pts`;
+  if (scoreRank) scoreRank.textContent = `RANK ${rankObtido}`;
+
+  if (eVitoria) {
     tituloVeredito.textContent = 'CASO SOLUCIONADO!';
     badgeStatus.textContent = 'Suspeito Capturado e Custodiado';
     badgeStatus.className = 'badge-status status-vitoria';
 
-    mensagemJustificativa.textContent = 'O mandado de prisão foi cumprido com sucesso com base nas evidências apresentadas.';
-    scoreBonus.textContent = '+500 pts';
-    scoreRank.textContent = 'RANK S';
+    mensagemJustificativa.textContent = dados.mensagem || 'O mandado de prisão foi cumprido com sucesso com base nas evidências apresentadas.';
   } else {
     tituloVeredito.textContent = 'CRIME NÃO SOLUCIONADO';
     badgeStatus.textContent = 'Caso Arquivado / Mandado Rejeitado';
     badgeStatus.className = 'badge-status status-derrota';
 
-    mensagemJustificativa.textContent = dados.mensagem || 'O suspeito informado não corresponde às evidências levantadas.';
-    scoreBonus.textContent = '+0 pts';
-    scoreRank.textContent = 'RANK F';
+    const culpadoRealMsg = dados.pokemon
+      ? ` O suspeito real era ${String(dados.pokemon).toUpperCase()}.`
+      : '';
+    mensagemJustificativa.textContent = (dados.mensagem || 'O suspeito informado não corresponde às evidências levantadas.') + culpadoRealMsg;
   }
 });

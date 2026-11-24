@@ -12,10 +12,13 @@
     <header class="painel-topo">
       <a href="/campanha" class="btn-voltar-caso">← Voltar para a Mesa de Casos</a>
       <h1 id="titulo-caso" class="titulo-caso-detalhe">A carregar caso...</h1>
-      <button type="button" onclick="exibirModalInstrucaoLayout('${caso.tipo_layout}', true)" style="background: #3b2718; color: #ffcc00; border: 1px solid #5a3d28; padding: 6px 12px; font-family: monospace; font-weight: bold; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+      <button type="button" id="btn-ajuda-layout" title="Ver manual do layout" style="background: #3b2718; color: #ffcc00; border: 1px solid #5a3d28; padding: 6px 12px; font-family: monospace; font-weight: bold; border-radius: 4px; cursor: pointer; margin-right: 10px;">
           📁
       </button>
-      <span id="rank-caso" class="badge-rank">RANK -</span>
+      <div class="topo-status-grupo">
+        <span id="relogio-pericia" class="badge-horas" title="Horas de perícia restantes">⏱️ --h</span>
+        <span id="rank-caso" class="badge-rank">RANK -</span>
+      </div>
     </header>
 
     <div class="layout-investigacao">
@@ -29,13 +32,14 @@
           Com base nas evidências levantadas, informe o nome do Pokémon responsável pelo delito para emitir a ordem de captura.
         </p>
 
-        <form id="form-mandado" class="form-mandado">
+        <form id="form-mandado" class="form-mandado" autocomplete="off">
           <label for="input-suspeito">Nome do Pokémon Suspeito:</label>
           <div class="input-autocomplete-wrapper">
             <input 
             type="text" 
             id="input-suspeito" 
             placeholder="Ex: Haunter, Magmar, Pikachu..." 
+            autocomplete="off"
             required 
           />
             <ul id="sugestoes-lista" class="sugestoes-lista oculto"></ul>
@@ -66,7 +70,7 @@
 
   </main>
 
-  <script src="/js/investigacao.js"></script>
   <script src="/js/manualModal.js"></script>
+  <script src="/js/investigacao.js"></script>
 </body>
 </html>

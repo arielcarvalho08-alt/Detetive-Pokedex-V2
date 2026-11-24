@@ -1,10 +1,121 @@
 let listaPokemonsCache = [];
 const ehDiario = new URLSearchParams(window.location.search).get('tipo') === 'diario';
 
+const estadoPericia = {
+  horasIniciais: 60,
+  horasRestantes: 60,
+  periciaEsgotada: false,
+  layoutAtual: 'padrao'
+};
+
+function atualizarDisplayHoras(animar = false) {
+  const relogioEl = document.getElementById('relogio-pericia');
+  if (!relogioEl) return;
+
+  relogioEl.textContent = `⏱️ ${estadoPericia.horasRestantes}h / ${estadoPericia.horasIniciais}h`;
+  relogioEl.classList.remove('alerta-baixo', 'esgotado', 'flash-perda');
+
+  if (estadoPericia.horasRestantes <= 0) {
+    relogioEl.classList.add('esgotado');
+  } else if (estadoPericia.horasRestantes <= Math.max(10, Math.ceil(estadoPericia.horasIniciais * 0.25))) {
+    relogioEl.classList.add('alerta-baixo');
+  }
+
+  if (animar) {
+    void relogioEl.offsetWidth;
+    relogioEl.classList.add('flash-perda');
+    setTimeout(() => relogioEl.classList.remove('flash-perda'), 350);
+  }
+} 
+
+function aplicarBloqueioPericiaEsgotada() {
+  const container = document.getElementById('container-conteudo-caso');
+  if (!container) return;
+
+  if (!container.querySelector('#aviso-horas-esgotadas')) {
+    const aviso = document.createElement('div');
+    aviso.id = 'aviso-horas-esgotadas';
+    aviso.className = 'pericia-esgotada-banner';
+    aviso.innerHTML = `
+      <strong>⏱️ TEMPO DE PERÍCIA ESGOTADO (0h):</strong> Novas coletas, testes e análises foram bloqueados.
+      Utilize as evidências já levantadas no painel ao lado para <strong>EXECUTAR O MANDADO</strong>.
+    `;
+    container.prepend(aviso);
+  }
+
+  if (window._cleanupPolysphereListeners) {
+    window._cleanupPolysphereListeners();
+    window._cleanupPolysphereListeners = null;
+  }
+  if (window._cleanupInterrogatorioLoops) {
+    window._cleanupInterrogatorioLoops();
+    window._cleanupInterrogatorioLoops = null;
+  }
+  if (window._cleanupLaboratorioLoops) {
+    window._cleanupLaboratorioLoops();
+    window._cleanupLaboratorioLoops = null;
+  }
+
+  const pincel = container.querySelector('#pincel-forense');
+  if (pincel) pincel.style.opacity = '0';
+
+  const btnCruzar = container.querySelector('#btn-cruzar-dados');
+  if (btnCruzar) btnCruzar.disabled = true;
+
+  const btnAbrirAnexo = container.querySelector('#btn-abrir-anexo-secreto');
+  if (btnAbrirAnexo) btnAbrirAnexo.disabled = true;
+
+  const btnConfrontar = container.querySelector('#btn-confrontar');
+  if (btnConfrontar) btnConfrontar.disabled = true;
+
+  container.querySelectorAll('.btn-acalmar-ind').forEach(b => (b.disabled = true));
+
+  const btnSintonizar = container.querySelector('#btn-sintonizar');
+  if (btnSintonizar) btnSintonizar.disabled = true;
+
+  const btnGerarChave = container.querySelector('#btn-gerar-chave');
+  if (btnGerarChave) btnGerarChave.disabled = true;
+}
+
+window.descontarHoras = function descontarHoras(quantidade, motivo = '') {
+  const valor = Math.max(0, Number(quantidade) || 0);
+  if (valor === 0) return estadoPericia.horasRestantes;
+
+  estadoPericia.horasRestantes = Math.max(0, estadoPericia.horasRestantes - valor);
+  atualizarDisplayHoras(true);
+
+  if (motivo) {
+    console.log(`⏱️ -${valor}h (${motivo}) | Restante: ${estadoPericia.horasRestantes}h`);
+  }
+
+  if (estadoPericia.horasRestantes <= 0 && !estadoPericia.periciaEsgotada) {
+    estadoPericia.periciaEsgotada= true;
+    aplicarBloqueioPericiaEsgotada();
+  }
+
+  return estadoPericia.horasRestantes;
+};
+
+function periciaBloqueada() {
+  return estadoPericia.periciaEsgotada || estadoPericia.horasRestantes <= 0;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const casoId = urlParams.get('id');
   const tipoCaso = urlParams.get('tipo');
+
+  const btnAjuda = document.getElementById('btn-ajuda-layout');
+  if (btnAjuda) {
+    btnAjuda.addEventListener('click', () => {
+      const layoutAlvo = estadoPericia.layoutAtual || 'padrao';
+      if (typeof window.exibirModalInstrucaoLayout === 'function') {
+        window.exibirModalInstrucaoLayout(layoutAlvo, true);
+      } else {
+        console.warn('exibirModalInstrucaoLayout não encontrado.');
+      }
+    });
+  }
 
   const btnVoltar = document.querySelector('.btn-voltar-caso');
   if (btnVoltar && tipoCaso === 'diario') {
@@ -168,7 +279,11 @@ function configurarModalDossie(endpointMandado, tipoCaso, casoId) {
       const resposta = await fetch(endpointMandado, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ palpite: palpiteAtual })
+        body: JSON.stringify({
+          palpite: palpiteAtual,
+          horasRestantes: estadoPericia.horasRestantes,
+          horasIniciais: estadoPericia.horasIniciais
+        })
       });
 
       const dados = await resposta.json();
@@ -176,13 +291,16 @@ function configurarModalDossie(endpointMandado, tipoCaso, casoId) {
       dados.tipoCaso = tipoCaso;
       dados.casoId = casoId;
       dados.palpite = palpiteAtual;
+      dados.proximoCasoId = dados.proximo_caso_id || null;
+      dados.horasIniciais = dados.horas_iniciais ?? estadoPericia.horasIniciais;
+      dados.horasRestantes = dados.horas_restantes ?? estadoPericia.horasRestantes;
+      dados.tempoEsgotado = dados.horasRestantes <= 0;
 
       sessionStorage.setItem('resultado_investigacao', JSON.stringify(dados));
       window.location.href = '/conclusao';
 
     } catch (error) {
       console.error('Erro ao validar mandado:', error);
-      alert('Erro ao conectar ao servidor para emitir mandado.'); 
     }
   };
 
@@ -200,6 +318,12 @@ function configurarModalDossie(endpointMandado, tipoCaso, casoId) {
 
 function renderizarCaso(caso) {
   if (!caso) return;
+
+  estadoPericia.horasIniciais = Number(caso.horas_iniciais) || 60;
+  estadoPericia.horasRestantes = estadoPericia.horasIniciais;
+  estadoPericia.periciaEsgotada = false;
+  estadoPericia.layoutAtual = caso.tipo_layout || 'padrao';
+  atualizarDisplayHoras(false);
 
   const tituloEl = document.getElementById('titulo-caso');
   if (tituloEl) {
@@ -223,7 +347,7 @@ function renderizarCaso(caso) {
   } else if (caso.tipo_layout === 'interrogatorio_confronto') {
     renderizarLayoutInterrogatorioConfronto(caso, containerPasta); 
   } else if (caso.tipo_layout === 'laboratorio' || caso.tipo_layout === 'laboratorio_medico') {
-    renderizarLayoutLaboratorio(caso, containerPasta)
+    renderizarLayoutLaboratorio(caso, containerPasta);
   } else {
     renderizarLayoutPadrao(caso, containerPasta);
   }
@@ -328,7 +452,12 @@ function renderizarLayoutPlantaBaixa(caso, container) {
 
     <!-- PAINEL DE CORRELAÇÃO E DEDUÇÃO -->
     <div class="secao-doc" style="box-sizing: border-box; max-width: 100%; min-width: 0; margin-top: 22px; border-top: 2px dashed #5a3d28; padding-top: 15px;">
-      <h3 style="color: #8b0000; margin-bottom: 8px;">🔬 Painel de Correlação e Dedução</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+        <h3 style="color: #8b0000; margin: 0;">🔬 Painel de Correlação e Dedução</h3>
+        <span id="contador-correlacoes" style="margin-left: auto; flex-shrink: 0; font-size: 0.82rem; font-weight: bold; padding: 3px 10px; border-radius: 999px; background: #2b1d0c; color: #ffcc00; border: 1px solid #5a3d28;">
+          🔗 Correlações: 0/0
+        </span>
+      </div>
       <p style="font-size: 0.85rem; color: #5a3d28; margin-bottom: 10px;">Compare os indícios coletados e combine dois vestígios que apontem para o mesmo aspecto do caso:</p>
       
       <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; width: 100%; box-sizing: border-box;">
@@ -381,6 +510,7 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   const selectPista1 = container.querySelector('#select-pista-1');
   const selectPista2 = container.querySelector('#select-pista-2');
   const btnCruzarDados = container.querySelector('#btn-cruzar-dados');
+  const contadorCorrelacoesEl = container.querySelector('#contador-correlacoes');
   const resultadoDeducao = container.querySelector('#resultado-deducao');
   const listaDossie = container.querySelector('#lista-dossie-descobertas');
   const avisoVazioDossie = container.querySelector('#aviso-vazio-dossie');
@@ -391,6 +521,28 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   const pistasColetadasIds = new Set();
   const descobertasRegistradas = new Set();
   const cruzamentosInvalidosTestados = new Set();
+
+  const correlacoes = caso.correlacoes || {};
+  const chavesCorrelacoesUnicas = new Set(
+    Object.keys(correlacoes).map(k => k.split('+').map(s => s.trim()).sort().join('+'))
+  );
+  const totalCorrelacoesPossiveis = chavesCorrelacoesUnicas.size;
+
+  function atualizarContadorCorrelacoes() {
+    if (!contadorCorrelacoesEl) return;
+    const feitas = descobertasRegistradas.size;
+    if (totalCorrelacoesPossiveis > 0 && feitas >= totalCorrelacoesPossiveis) {
+      contadorCorrelacoesEl.textContent = `🏆 Correlações: ${feitas}/${totalCorrelacoesPossiveis} (Concluídas)`;
+      contadorCorrelacoesEl.style.background = '#3a250b';
+      contadorCorrelacoesEl.style.color = '#fde047';
+      contadorCorrelacoesEl.style.borderColor = '#eab308';
+    } else {
+      contadorCorrelacoesEl.textContent = `🔗 Correlações: ${feitas}/${totalCorrelacoesPossiveis}`;
+      contadorCorrelacoesEl.style.background = '#2b1d0c';
+      contadorCorrelacoesEl.style.color = '#ffcc00';
+      contadorCorrelacoesEl.style.borderColor = '#5a3d28';
+    }
+  }
 
   let pistaAlvoAtual = null;
   let progressoVarredura = 0;
@@ -491,6 +643,16 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   }
 
   function revelarVestigio(reg) {
+    if (periciaBloqueada()) {
+      resetarProgressoPincel();
+      return;
+    }
+    if (reg.coletada) {
+      resetarProgressoPincel();
+      return;
+    }
+
+    // As horas da planta baixa são descontadas ao cruzar as evidências, não ao coletar o vestígio
     reg.coletada = true;
     reg.hotspot.classList.remove('ponto-oculto', 'vestigio-sinalizado');
     reg.hotspot.classList.add('coletada');
@@ -503,6 +665,10 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   }
 
   function verificarProximidadePincel(mousePctX, mousePctY) {
+    if (periciaBloqueada()) {
+      resetarProgressoPincel();
+      return;
+    }
     const RAIO_DETECCAO = 8.5;
     const RAIO_RADAR = 35;
     scannerCoordsEl.textContent = `POS: ${Math.round(mousePctX).toString().padStart(2, '0')}% / ${Math.round(mousePctY).toString().padStart(2, '0')}%`;
@@ -535,6 +701,10 @@ function renderizarLayoutPlantaBaixa(caso, container) {
         pincelEl.classList.add('vestigio-proximo');
         pincelAvisoEl.textContent = '⚠️ VESTÍGIO! SEGURE AQUI';
         intervaloPincel = setInterval(() => {
+          if (periciaBloqueada()) {
+            resetarProgressoPincel();
+            return;
+          }
           progressoVarredura += 4.5;
           const offset = circunferenciaPincel - (progressoVarredura / 100) * circunferenciaPincel;
           pincelAnelProgresso.style.strokeDashoffset = `${Math.max(0, offset)}`;
@@ -593,6 +763,8 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   });
 
   btnCruzarDados.addEventListener('click', () => {
+    if (periciaBloqueada()) return;
+    
     const v1 = selectPista1.value;
     const v2 = selectPista2.value;
     if (!v1 || !v2) {
@@ -609,32 +781,54 @@ function renderizarLayoutPlantaBaixa(caso, container) {
     const parOrdenado = [v1, v2].sort().join('+');
     const parDireto = `${v1}+${v2}`;
     const parInverso = `${v2}+${v1}`;
-    const correlacoes = caso.correlacoes || {};
     const matchCorrelacao = correlacoes[parOrdenado] || correlacoes[parDireto] || correlacoes[parInverso];
 
     if (matchCorrelacao) {
-      const textoDescoberta = typeof matchCorrelacao === 'string' ? matchCorrelacao : matchCorrelacao.texto;
-      const corBorda = (typeof matchCorrelacao === 'object' && matchCorrelacao.cor) ? matchCorrelacao.cor : '#155724';
-      resultadoDeducao.innerHTML = `✅ ${textoDescoberta}`;
-      resultadoDeducao.style.borderLeftColor = corBorda;
-
       if (!descobertasRegistradas.has(parOrdenado)) {
+        const p1 = pistasPorId.get(v1);
+        const p2 = pistasPorId.get(v2);
+        const custoCruzamento = Number(p1 && p1.custo_horas) || Number(p2 && p2.custo_horas) || 15;
+        window.descontarHoras(custoCruzamento, `Cruzamento: ${parOrdenado}`);
+        if (periciaBloqueada()) return;
+
         descobertasRegistradas.add(parOrdenado);
+        atualizarContadorCorrelacoes();
         if (avisoVazioDossie) {
           avisoVazioDossie.remove();
         }
+        const textoDescoberta = typeof matchCorrelacao === 'string' ? matchCorrelacao : matchCorrelacao.texto;
         const li = document.createElement('li');
         li.style.marginBottom = '8px';
         li.innerHTML = textoDescoberta;
         listaDossie.appendChild(li);
       }
+
+      const textoDescoberta = typeof matchCorrelacao === 'string' ? matchCorrelacao : matchCorrelacao.texto;
+      const corBorda = (typeof matchCorrelacao === 'object' && matchCorrelacao.cor) ? matchCorrelacao.cor : '#155724';
+      resultadoDeducao.innerHTML = `✅ ${textoDescoberta}`;
+      resultadoDeducao.style.borderLeftColor = corBorda;
     } else {
-      const jaTestado = cruzamentosInvalidosTestados.has(parOrdenado);
-      cruzamentosInvalidosTestados.add(parOrdenado);
       const p1 = pistasPorId.get(v1);
       const p2 = pistasPorId.get(v2);
       const resumoPar = p1 && p2 ? ` <em>(${p1.nome} + ${p2.nome})</em>` : '';
-      resultadoDeducao.innerHTML = `❌ <strong>Sem Correlação Direta${resumoPar}:</strong> Esses dois indícios não formam uma dedução consistente${jaTestado ? ' (já testado)' : ''}. Releia os detalhes coletados e tente combinar pistas que convergem.`;
+      const investigacaoConcluida =
+        totalCorrelacoesPossiveis > 0 && descobertasRegistradas.size >= totalCorrelacoesPossiveis;
+
+      if (investigacaoConcluida) {
+        resultadoDeducao.innerHTML = `ℹ️ <strong>Sem Correlação Direta${resumoPar}:</strong> Todas as correlações deste setor já foram concluídas (sem desconto de horas).`;
+        resultadoDeducao.style.borderLeftColor = '#8b0000';
+        return;
+      }
+
+      const jaTestado = cruzamentosInvalidosTestados.has(parOrdenado);
+      if (!jaTestado) {
+        cruzamentosInvalidosTestados.add(parOrdenado);
+        window.descontarHoras(5, `Correlação inválida: ${parOrdenado}`);
+        if (periciaBloqueada()) return;
+        resultadoDeducao.innerHTML = `❌ <strong>Sem Correlação Direta${resumoPar}:</strong> Esses dois indícios não formam uma dedução consistente (-5h). Releia os detalhes coletados e tente combinar pistas que convergem.`;
+      } else {
+        resultadoDeducao.innerHTML = `ℹ️ <strong>Sem Correlação Direta${resumoPar}:</strong> Combinação já testada anteriormente (sem novo desconto de horas).`;
+      }
       resultadoDeducao.style.borderLeftColor = '#8b0000';
     }
   });
@@ -674,6 +868,7 @@ function renderizarLayoutPlantaBaixa(caso, container) {
   });
 
   atualizarContadores();
+  atualizarContadorCorrelacoes();
   atualizarFiltroLentes('termico');
 
   const listaDepoimentos = container.querySelector('#lista-depoimentos');
@@ -875,7 +1070,7 @@ function renderizarLayoutDocumentoSecreto(caso, container) {
     }
 
     btnAbrirAnexo.addEventListener('click', () => {
-        if (anexoDesbloqueado) return;
+        if (periciaBloqueada() || anexoDesbloqueado) return;
         anexoDesbloqueado = true;
         btnAbrirAnexo.disabled = true;
         btnAbrirAnexo.textContent = '✅ ANEXO ULTRASSECRETO CONSOLIDADO';
@@ -1055,6 +1250,7 @@ function renderizarLayoutDocumentoSecreto(caso, container) {
         const pistaId = tarja.getAttribute('data-pista-id');
         const pistaObj = (caso.pistas || []).find(p => p.id_pista === pistaId);
         tarja.addEventListener('click', () => {
+            if (periciaBloqueada()) return;
             if (tarja.classList.contains('revelada')) return;
             tarjaAtivaSelecionada = tarja;
             pistaAtivaObj = pistaObj;
@@ -1150,16 +1346,28 @@ function renderizarLayoutDocumentoSecreto(caso, container) {
     }
 
     function verificarConsolidacao() {
-        if (!tarjaAtivaSelecionada) return;
+        if (periciaBloqueada()) return;
+        if (!tarjaAtivaSelecionada || tarjaAtivaSelecionada.classList.contains('revelada')) return;
+
         const diffX = Math.abs(normalizarAngulo(rotX));
         const diffY = Math.abs(normalizarAngulo(rotY));
+        const estaAlinhado = diffX < margemAlinhamento && diffY < margemAlinhamento;
         const palavraEsperada = ((pistaAtivaObj && (pistaAtivaObj.palavra_chave_resposta || pistaAtivaObj.descricao_revelada)) || 'dado').trim();
         const opcaoCorreta = normalizarTexto(opcaoGiroSelecionada) === normalizarTexto(palavraEsperada);
+        const pistaId = tarjaAtivaSelecionada.getAttribute('data-pista-id');
 
-        if (diffX < margemAlinhamento && diffY < margemAlinhamento && opcaoCorreta) {
+        if (estaAlinhado && opcaoCorreta) {
+            if (!chavesDescobertas.has(pistaId)) {
+                const custo = Number(pistaAtivaObj && pistaAtivaObj.custo_horas) || 15;
+                window.descontarHoras(custo, `Tarja: ${pistaAtivaObj ? pistaAtivaObj.nome : pistaId}`);
+                if (periciaBloqueada()) {
+                    fecharModal();
+                    return;
+                }
+            }
+
             fecharModal();
             const textoFinalRevelado = (pistaAtivaObj && pistaAtivaObj.descricao_revelada) || palavraEsperada;
-            const pistaId = tarjaAtivaSelecionada.getAttribute('data-pista-id');
             tarjaAtivaSelecionada.classList.add('revelada');
             tarjaAtivaSelecionada.innerText = textoFinalRevelado;
             chavesDescobertas.set(pistaId, palavraEsperada);
@@ -1173,10 +1381,20 @@ function renderizarLayoutDocumentoSecreto(caso, container) {
                 listaPistas.appendChild(li);
             }
         } else {
-            if (diffX < margemAlinhamento && diffY < margemAlinhamento && !opcaoCorreta) {
-                feedbackCripto.textContent = `⚠️ A palavra "${opcaoGiroSelecionada.toUpperCase()}" não corresponde a esta evidência. Teste outra opção de giro!`;
+            if (!chavesDescobertas.has(pistaId)) {
+                window.descontarHoras(5, 'Erro na decodificação 3D');
+                if (periciaBloqueada()) {
+                    fecharModal();
+                    return;
+                }
+            }
+
+            if (estaAlinhado && !opcaoCorreta) {
+                feedbackCripto.textContent = `🎯 Estilhaços alinhados, mas "${opcaoGiroSelecionada.toUpperCase()}" não é a palavra-chave deste trecho. Tente outra opção! (-5h)`;
+            } else if (!estaAlinhado && opcaoCorreta) {
+                feedbackCripto.textContent = `🔄 Palavra candidata válida, mas os estilhaços ainda estão desalinhados no centro. Ajuste o giro! (-5h)`;
             } else {
-                feedbackCripto.textContent = '⚠️ Alinhe os estilhaços no centro antes de consolidar.';
+                feedbackCripto.textContent = '⚠️ Escolha a palavra-chave certa e alinhe os estilhaços no centro antes de consolidar. (-5h)';
             }
             viewport.classList.add('erro-tremor');
             setTimeout(() => viewport.classList.remove('erro-tremor'), 400);
@@ -1205,512 +1423,569 @@ function renderizarLayoutDocumentoSecreto(caso, container) {
 }
 
 function renderizarLayoutInterrogatorioConfronto(caso, container) {
-    if (typeof window.exibirModalInstrucaoLayout === 'function') {
+  if (typeof window.exibirModalInstrucaoLayout === 'function') {
     window.exibirModalInstrucaoLayout('interrogatorio_confronto', ehDiario);
   }
 
-    if (window._cleanupInterrogatorioLoops) {
-        window._cleanupInterrogatorioLoops();
-        window._cleanupInterrogatorioLoops = null;
+  if (window._cleanupInterrogatorioLoops) {
+    window._cleanupInterrogatorioLoops();
+    window._cleanupInterrogatorioLoops = null;
+  }
+
+  const CUSTO_CAFE = 3;
+
+  container.innerHTML = `
+    <div class="carimbo-topo">GABINETE DE INTERROGATÓRIO - TESTE DE POLÍGRAFO</div>
+    
+    <div class="secao-doc" style="margin-bottom: 12px;">
+      <p><strong>Relatório:</strong> ${caso.relatorio || 'Analise as declarações, selecione pares de frases para cruzar e acione o polígrafo no momento do stress.'}</p>
+    </div>
+
+    <div class="confronto-wrapper" style="display: flex; flex-direction: column; gap: 14px; padding-bottom: 30px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box;">
+        <span style="font-weight: bold; color: #8b0000; font-size: 0.95rem;">🕵️ Progresso das Contradições</span>
+        <span id="contador-interrogatorio" style="margin-left: auto; flex-shrink: 0; font-size: 0.82rem; font-weight: bold; padding: 3px 10px; border-radius: 999px; background: #2b1d0c; color: #ffcc00; border: 1px solid #5a3d28;">
+          🔍 Pistas Extraídas: 0/0
+        </span>
+      </div>
+
+      <div class="cartoes-testemunhas-grid" id="grid-testemunhas"></div>
+
+      <div class="painel-poligrafo-confronto" id="painel-poligrafo">
+        <div class="poligrafo-titulo">
+          <span>MONITOR DE STRESS (POLÍGRAFO)</span>
+          <span id="status-poligrafo">SISTEMA: AGUARDANDO SELEÇÃO DE DUPLA</span>
+        </div>
+        
+        <div class="monitor-container">
+          <canvas id="canvas-ecg-poligrafo" width="420" height="46"></canvas>
+          <span class="bpm-indicador" id="bpm-display">72 BPM</span>
+        </div>
+
+        <div class="slots-confronto">
+          <div class="slot-item" id="slot-a"><strong>Versão A:</strong> <em>Nenhuma</em></div>
+          <span>⚡</span>
+          <div class="slot-item" id="slot-b"><strong>Versão B:</strong> <em>Nenhuma</em></div>
+        </div>
+
+        <div class="barra-timing-wrapper" id="barra-timing">
+          <div class="zona-alvo-indicador" id="zona-alvo" title="Janela de Pico de Stress"></div>
+          <div class="barra-timing-fill" id="timing-fill"></div>
+        </div>
+
+        <button type="button" id="btn-confrontar" class="btn-confrontar-versao" disabled style="margin-top: 12px; position: relative; z-index: 5;">⚡ TESTAR CONFRONTO NO POLÍGRAFO</button>
+      </div>
+
+      <div class="painel-detalhe-pista" id="detalhe-confronto">
+        <em>💡 <strong>Instrução:</strong> Selecione duas frases de testemunhas para cruzar. Se uma testemunha atingir o nível crítico (🔴 Hostil), confrontá-la custará horas extras de investigação!</em>
+      </div>
+    </div>
+  `;
+
+  const gridTestemunhas = container.querySelector('#grid-testemunhas');
+  const slotA = container.querySelector('#slot-a');
+  const slotB = container.querySelector('#slot-b');
+  const btnConfrontar = container.querySelector('#btn-confrontar');
+  const contadorInterrogatorioEl = container.querySelector('#contador-interrogatorio');
+  const painelPoligrafo = container.querySelector('#painel-poligrafo');
+  const statusPoligrafo = container.querySelector('#status-poligrafo');
+  const detalheBox = container.querySelector('#detalhe-confronto');
+  const barraTiming = container.querySelector('#barra-timing');
+  const timingFill = container.querySelector('#timing-fill');
+  const zonaAlvo = container.querySelector('#zona-alvo');
+
+  const canvasEcg = container.querySelector('#canvas-ecg-poligrafo');
+  const ctxEcg = canvasEcg.getContext('2d');
+  const bpmDisplay = container.querySelector('#bpm-display');
+
+  const depoimentos = caso.depoimentos || [];
+  const confrontosCorretos = caso.confrontos_corretos || [];
+  const confrontosComPista = confrontosCorretos.filter(c => Boolean(c.pista_id));
+  const totalPistasPossiveis = confrontosComPista.length;
+  const pistasGlobais = caso.pistas || [];
+
+  const tensaoTestemunhas = depoimentos.map(() => 1);
+
+  let selecaoA = null;
+  let selecaoB = null;
+  let emMinijogoAtivo = false;
+  let interrogatorioEncerrado = false;
+  let startTime = null;
+  let animacaoFrame = null;
+  let ecgFrameId = null;
+  let layoutAtivo = true;
+
+  const paresResolvidos = new Set();
+  const divergenciasSemPistaTestadas = new Set();
+  let pistasDescobertasHtml = "";
+
+  const duracaoMinijogo = 3500;
+  let zonaAlvoInicio = 30;
+  let zonaAlvoFim = 60;
+
+  let estadoOndaEcg = 'normal';
+  let ecgOffset = 0;
+
+  function atualizarContadorInterrogatorio() {
+    if (!contadorInterrogatorioEl) return;
+    const extraidas = paresResolvidos.size;
+    if (totalPistasPossiveis > 0 && extraidas >= totalPistasPossiveis) {
+      contadorInterrogatorioEl.textContent = `🏆 Pistas Extraídas: ${extraidas}/${totalPistasPossiveis} (Concluído)`;
+      contadorInterrogatorioEl.style.background = '#3a250b';
+      contadorInterrogatorioEl.style.color = '#fde047';
+      contadorInterrogatorioEl.style.borderColor = '#eab308';
+    } else {
+      contadorInterrogatorioEl.textContent = `🔍 Pistas Extraídas: ${extraidas}/${totalPistasPossiveis}`;
+      contadorInterrogatorioEl.style.background = '#2b1d0c';
+      contadorInterrogatorioEl.style.color = '#ffcc00';
+      contadorInterrogatorioEl.style.borderColor = '#5a3d28';
+    }
+  }
+
+  atualizarContadorInterrogatorio();
+
+  function animarMonitorECG() {
+    if (!layoutAtivo) return;
+    const w = canvasEcg.width;
+    const h = canvasEcg.height;
+    ctxEcg.clearRect(0, 0, w, h);
+
+    ctxEcg.strokeStyle = 'rgba(217, 119, 6, 0.14)';
+    ctxEcg.lineWidth = 1;
+    for (let x = 0; x < w; x += 28) {
+      ctxEcg.beginPath(); ctxEcg.moveTo(x, 0); ctxEcg.lineTo(x, h); ctxEcg.stroke();
     }
 
-    container.innerHTML = `
-      <div class="carimbo-topo">GABINETE DE INTERROGATÓRIO - TESTE DE POLÍGRAFO</div>
-      
-      <div class="secao-doc" style="margin-bottom: 12px;">
-        <p><strong>Relatório:</strong> ${caso.relatorio || 'Analise as declarações, selecione pares de frases para cruzar e acione o polígrafo no momento do stress.'}</p>
-      </div>
+    let velocidade = 1.2;
+    let frequenciaOscilacao = 1.0;
+    let corLinha = '#ffcc00';
+    let bpmTexto = '72 BPM';
 
-      <div class="confronto-wrapper" style="display: flex; flex-direction: column; gap: 14px; padding-bottom: 30px;">
-        <div class="cartoes-testemunhas-grid" id="grid-testemunhas"></div>
+    if (estadoOndaEcg === 'acerto') {
+      velocidade = 0.6;
+      frequenciaOscilacao = 0.6;
+      corLinha = '#28a745';
+      bpmTexto = '56 BPM';
+    } else if (estadoOndaEcg === 'erro') {
+      velocidade = 3.0;
+      frequenciaOscilacao = 2.2;
+      corLinha = '#ff4d4d';
+      bpmTexto = '144 BPM';
+    }
 
-        <div class="painel-poligrafo-confronto" id="painel-poligrafo">
-          <div class="poligrafo-titulo">
-            <span>MONITOR DE STRESS (POLÍGRAFO)</span>
-            <span id="status-poligrafo">SISTEMA: AGUARDANDO SELEÇÃO DE DUPLA</span>
-          </div>
-          
-          <div class="monitor-container">
-            <canvas id="canvas-ecg-poligrafo" width="420" height="46"></canvas>
-            <span class="bpm-indicador" id="bpm-display">72 BPM</span>
-          </div>
+    bpmDisplay.textContent = bpmTexto;
+    bpmDisplay.style.color = corLinha;
 
-          <div class="slots-confronto">
-            <div class="slot-item" id="slot-a"><strong>Versão A:</strong> <em>Nenhuma</em></div>
-            <span>⚡</span>
-            <div class="slot-item" id="slot-b"><strong>Versão B:</strong> <em>Nenhuma</em></div>
-          </div>
+    ctxEcg.strokeStyle = corLinha;
+    ctxEcg.shadowColor = corLinha;
+    ctxEcg.shadowBlur = 5;
+    ctxEcg.lineWidth = 2;
+    ctxEcg.beginPath();
 
-          <div class="barra-timing-wrapper" id="barra-timing">
-            <div class="zona-alvo-indicador" id="zona-alvo" title="Janela de Pico de Stress"></div>
-            <div class="barra-timing-fill" id="timing-fill"></div>
-          </div>
+    for (let x = 0; x < w; x++) {
+      const ciclo = ((x * frequenciaOscilacao) + ecgOffset) % 70;
+      let y = h / 2;
 
-          <button type="button" id="btn-confrontar" class="btn-confrontar-versao" disabled style="margin-top: 12px; position: relative; z-index: 5;">⚡ TESTAR CONFRONTO NO POLÍGRAFO</button>
+      if (ciclo > 20 && ciclo <= 24) {
+        y -= 4;
+      } else if (ciclo > 28 && ciclo <= 31) {
+        y += 5;
+      } else if (ciclo > 31 && ciclo <= 35) {
+        y -= 13 * (frequenciaOscilacao > 1 ? 1.2 : 0.8);
+      } else if (ciclo > 35 && ciclo <= 39) {
+        y += 7;
+      }
+
+      x === 0 ? ctxEcg.moveTo(x, y) : ctxEcg.lineTo(x, y);
+    }
+    ctxEcg.stroke();
+    ctxEcg.shadowBlur = 0;
+
+    ecgOffset += velocidade;
+    ecgFrameId = requestAnimationFrame(animarMonitorECG);
+  }
+
+  window._cleanupInterrogatorioLoops = () => {
+    layoutAtivo = false;
+    if (animacaoFrame) cancelAnimationFrame(animacaoFrame);
+    if (ecgFrameId) cancelAnimationFrame(ecgFrameId);
+  };
+
+  animarMonitorECG();
+
+  function atualizarCartaoTestemunha(idx) {
+    const nivel = tensaoTestemunhas[idx];
+    const badge = container.querySelector(`#badge-tensao-${idx}`);
+    const btnAcalmarInd = container.querySelector(`#btn-acalmar-ind-${idx}`);
+    const card = container.querySelector(`#card-testemunha-${idx}`);
+
+    if (!badge || !card) return;
+
+    card.classList.remove('estado-calmo', 'estado-defensivo', 'estado-hostil');
+    badge.className = 'badge-tensao-ind';
+
+    if (nivel === 1) {
+      card.classList.add('estado-calmo');
+      badge.classList.add('verde');
+      badge.textContent = '🟢 Calma';
+      if (btnAcalmarInd) btnAcalmarInd.classList.add('oculto');
+    } else if (nivel === 2) {
+      card.classList.add('estado-defensivo');
+      badge.classList.add('amarelo');
+      badge.textContent = '🟡 Defensiva';
+      if (btnAcalmarInd) btnAcalmarInd.classList.remove('oculto');
+    } else {
+      card.classList.add('estado-hostil');
+      badge.classList.add('vermelho');
+      badge.textContent = '🔴 Hostil (-5h/teste)';
+      if (btnAcalmarInd) btnAcalmarInd.classList.remove('oculto');
+    }
+
+    atualizarTextoBotaoConfronto();
+  }
+
+  function calcularCustoExtraSelecao() {
+    let custo = 0;
+    if (selecaoA && tensaoTestemunhas[selecaoA.testemunhaIdx] >= 3) custo += 5;
+    if (selecaoB && tensaoTestemunhas[selecaoB.testemunhaIdx] >= 3) custo += 5;
+    return custo;
+  }
+
+  function atualizarTextoBotaoConfronto() {
+    if (emMinijogoAtivo || interrogatorioEncerrado) return;
+    if (selecaoA && selecaoB) {
+      btnConfrontar.disabled = false;
+      btnConfrontar.style.background = '';
+      btnConfrontar.style.opacity = '1';
+      btnConfrontar.style.cursor = 'pointer';
+
+      const custoExtra = calcularCustoExtraSelecao();
+      if (custoExtra > 0) {
+        btnConfrontar.textContent = `⚡ TESTAR CONFRONTO (⚠️ -${custoExtra}h POR HOSTILIDADE)`;
+        btnConfrontar.style.background = '#9a3412';
+      } else {
+        btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
+      }
+    }
+  }
+
+  gridTestemunhas.innerHTML = '';
+
+  depoimentos.forEach((dep, index) => {
+    const card = document.createElement('div');
+    card.className = 'cartao-testemunha-confronto estado-calmo';
+    card.id = `card-testemunha-${index}`;
+
+    let htmlFrases = '';
+    if (dep.frases && Array.isArray(dep.frases)) {
+      dep.frases.forEach(f => {
+        htmlFrases += `<span class="frase-confronto" data-id="${f.id}" data-testemunha-idx="${index}">${f.texto}</span>`;
+      });
+    }
+
+    card.innerHTML = `
+      <div class="cabecalho-testemunha-ind">
+        <h4>👤 ${dep.testemunha}</h4>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span id="badge-tensao-${index}" class="badge-tensao-ind verde">🟢 Calma</span>
+          <button type="button" id="btn-acalmar-ind-${index}" class="btn-acalmar-ind oculto" title="Fazer pausa tática com esta testemunha (-${CUSTO_CAFE}h)">☕ -${CUSTO_CAFE}h</button>
         </div>
-
-        <div class="painel-detalhe-pista" id="detalhe-confronto">
-          <em>💡 <strong>Instrução:</strong> Selecione duas frases de testemunhas para cruzar. Se uma testemunha atingir o nível crítico (🔴 Hostil), insistir em confrontá-la custará horas extras de investigação!</em>
-        </div>
       </div>
+      <div class="lista-frases-container">${htmlFrases}</div>
     `;
+    gridTestemunhas.appendChild(card);
 
-    const gridTestemunhas = container.querySelector('#grid-testemunhas');
-    const slotA = container.querySelector('#slot-a');
-    const slotB = container.querySelector('#slot-b');
-    const btnConfrontar = container.querySelector('#btn-confrontar');
-    const painelPoligrafo = container.querySelector('#painel-poligrafo');
-    const statusPoligrafo = container.querySelector('#status-poligrafo');
-    const detalheBox = container.querySelector('#detalhe-confronto');
-    const barraTiming = container.querySelector('#barra-timing');
-    const timingFill = container.querySelector('#timing-fill');
-    const zonaAlvo = container.querySelector('#zona-alvo');
+    const btnAcalmarInd = card.querySelector(`#btn-acalmar-ind-${index}`);
+    btnAcalmarInd.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (emMinijogoAtivo || interrogatorioEncerrado || periciaBloqueada() || tensaoTestemunhas[index] <= 1) return;
 
-    const canvasEcg = container.querySelector('#canvas-ecg-poligrafo');
-    const ctxEcg = canvasEcg.getContext('2d');
-    const bpmDisplay = container.querySelector('#bpm-display');
+      if (typeof window.descontarHoras === 'function') {
+        window.descontarHoras(CUSTO_CAFE, `Pausa: ${dep.testemunha}`);
+        if (periciaBloqueada()) return;
+      } else if (typeof caso.horas_restantes === 'number') {
+        caso.horas_restantes = Math.max(0, caso.horas_restantes - CUSTO_CAFE);
+      }
 
-    const depoimentos = caso.depoimentos || [];
-    const confrontosCorretos = caso.confrontos_corretos || [];
-    const confrontosComPista = confrontosCorretos.filter(c => Boolean(c.pista_id));
-    const totalPistasPossiveis = confrontosComPista.length;
-    const pistasGlobais = caso.pistas || [];
+      tensaoTestemunhas[index] = Math.max(1, tensaoTestemunhas[index] - 1);
+      atualizarCartaoTestemunha(index);
 
-    const tensaoTestemunhas = depoimentos.map(() => 1);
+      const historicoAtual = pistasDescobertasHtml
+        ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
+        : '';
 
-    let selecaoA = null;
-    let selecaoB = null;
-    let emMinijogoAtivo = false;
-    let startTime = null;
-    let animacaoFrame = null;
-    let ecgFrameId = null;
-    let layoutAtivo = true;
-
-    const paresResolvidos = new Set();
-    const divergenciasSemPistaTestadas = new Set();
-    let pistasDescobertasHtml = "";
-
-    const duracaoMinijogo = 3500;
-    let zonaAlvoInicio = 30;
-    let zonaAlvoFim = 60;
-
-    let estadoOndaEcg = 'normal';
-    let ecgOffset = 0;
-
-    function animarMonitorECG() {
-        if (!layoutAtivo) return;
-        const w = canvasEcg.width;
-        const h = canvasEcg.height;
-        ctxEcg.clearRect(0, 0, w, h);
-
-        ctxEcg.strokeStyle = 'rgba(217, 119, 6, 0.14)';
-        ctxEcg.lineWidth = 1;
-        for (let x = 0; x < w; x += 28) {
-            ctxEcg.beginPath(); ctxEcg.moveTo(x, 0); ctxEcg.lineTo(x, h); ctxEcg.stroke();
-        }
-
-        let velocidade = 1.2;
-        let frequenciaOscilacao = 1.0;
-        let corLinha = '#ffcc00';
-        let bpmTexto = '72 BPM';
-
-        if (estadoOndaEcg === 'acerto') {
-            velocidade = 0.6;
-            frequenciaOscilacao = 0.6;
-            corLinha = '#28a745';
-            bpmTexto = '56 BPM';
-        } else if (estadoOndaEcg === 'erro') {
-            velocidade = 3.0;
-            frequenciaOscilacao = 2.2;
-            corLinha = '#ff4d4d';
-            bpmTexto = '144 BPM';
-        }
-
-        bpmDisplay.textContent = bpmTexto;
-        bpmDisplay.style.color = corLinha;
-
-        ctxEcg.strokeStyle = corLinha;
-        ctxEcg.shadowColor = corLinha;
-        ctxEcg.shadowBlur = 5;
-        ctxEcg.lineWidth = 2;
-        ctxEcg.beginPath();
-
-        for (let x = 0; x < w; x++) {
-            const ciclo = ((x * frequenciaOscilacao) + ecgOffset) % 70;
-            let y = h / 2;
-
-            if (ciclo > 20 && ciclo <= 24) {
-                y -= 4;
-            } else if (ciclo > 28 && ciclo <= 31) {
-                y += 5;
-            } else if (ciclo > 31 && ciclo <= 35) {
-                y -= 13 * (frequenciaOscilacao > 1 ? 1.2 : 0.8);
-            } else if (ciclo > 35 && ciclo <= 39) {
-                y += 7;
-            }
-
-            x === 0 ? ctxEcg.moveTo(x, y) : ctxEcg.lineTo(x, y);
-        }
-        ctxEcg.stroke();
-        ctxEcg.shadowBlur = 0;
-
-        ecgOffset += velocidade;
-        ecgFrameId = requestAnimationFrame(animarMonitorECG);
-    }
-
-    window._cleanupInterrogatorioLoops = () => {
-        layoutAtivo = false;
-        if (animacaoFrame) cancelAnimationFrame(animacaoFrame);
-        if (ecgFrameId) cancelAnimationFrame(ecgFrameId);
-    };
-
-    animarMonitorECG();
-
-    function atualizarCartaoTestemunha(idx) {
-        const nivel = tensaoTestemunhas[idx];
-        const badge = container.querySelector(`#badge-tensao-${idx}`);
-        const btnAcalmarInd = container.querySelector(`#btn-acalmar-ind-${idx}`);
-        const card = container.querySelector(`#card-testemunha-${idx}`);
-
-        if (!badge || !card) return;
-
-        card.classList.remove('estado-calmo', 'estado-defensivo', 'estado-hostil');
-        badge.className = 'badge-tensao-ind';
-
-        if (nivel === 1) {
-            card.classList.add('estado-calmo');
-            badge.classList.add('verde');
-            badge.textContent = '🟢 Calma';
-            if (btnAcalmarInd) btnAcalmarInd.classList.add('oculto');
-        } else if (nivel === 2) {
-            card.classList.add('estado-defensivo');
-            badge.classList.add('amarelo');
-            badge.textContent = '🟡 Defensiva';
-            if (btnAcalmarInd) btnAcalmarInd.classList.remove('oculto');
-        } else {
-            card.classList.add('estado-hostil');
-            badge.classList.add('vermelho');
-            badge.textContent = '🔴 Hostil (-5h/teste)';
-            if (btnAcalmarInd) btnAcalmarInd.classList.remove('oculto');
-        }
-
-        atualizarTextoBotaoConfronto();
-    }
-
-    function calcularCustoExtraSelecao() {
-        let custo = 0;
-        if (selecaoA && tensaoTestemunhas[selecaoA.testemunhaIdx] >= 3) custo += 5;
-        if (selecaoB && tensaoTestemunhas[selecaoB.testemunhaIdx] >= 3) custo += 5;
-        return custo;
-    }
-
-    function atualizarTextoBotaoConfronto() {
-        if (emMinijogoAtivo) return;
-        if (selecaoA && selecaoB) {
-            btnConfrontar.disabled = false;
-            btnConfrontar.style.background = '';
-            btnConfrontar.style.opacity = '1';
-            btnConfrontar.style.cursor = 'pointer';
-
-            const custoExtra = calcularCustoExtraSelecao();
-            if (custoExtra > 0) {
-                btnConfrontar.textContent = `⚡ TESTAR CONFRONTO (⚠️ -${custoExtra}h POR HOSTILIDADE)`;
-                btnConfrontar.style.background = '#9a3412';
-            } else {
-                btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
-            }
-        }
-    }
-
-    gridTestemunhas.innerHTML = '';
-
-    depoimentos.forEach((dep, index) => {
-        const card = document.createElement('div');
-        card.className = 'cartao-testemunha-confronto estado-calmo';
-        card.id = `card-testemunha-${index}`;
-
-        let htmlFrases = '';
-        if (dep.frases && Array.isArray(dep.frases)) {
-            dep.frases.forEach(f => {
-                htmlFrases += `<span class="frase-confronto" data-id="${f.id}" data-testemunha-idx="${index}">${f.texto}</span>`;
-            });
-        }
-
-        card.innerHTML = `
-            <div class="cabecalho-testemunha-ind">
-                <h4>👤 ${dep.testemunha}</h4>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span id="badge-tensao-${index}" class="badge-tensao-ind verde">🟢 Calma</span>
-                    <button type="button" id="btn-acalmar-ind-${index}" class="btn-acalmar-ind oculto" title="Fazer pausa tática com esta testemunha (-8h)">☕ -8h</button>
-                </div>
-            </div>
-            <div class="lista-frases-container">${htmlFrases}</div>
-        `;
-        gridTestemunhas.appendChild(card);
-
-        const btnAcalmarInd = card.querySelector(`#btn-acalmar-ind-${index}`);
-        btnAcalmarInd.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (emMinijogoAtivo || tensaoTestemunhas[index] <= 1) return;
-
-            if (typeof window.descontarHoras === 'function') {
-                window.descontarHoras(8);
-            } else if (typeof caso.horas_restantes === 'number') {
-                caso.horas_restantes = Math.max(0, caso.horas_restantes - 8);
-            }
-
-            tensaoTestemunhas[index] = Math.max(1, tensaoTestemunhas[index] - 1);
-            atualizarCartaoTestemunha(index);
-
-            const historicoAtual = pistasDescobertasHtml
-                ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
-                : '';
-
-            detalheBox.innerHTML = `<div>☕ <strong>Pausa com ${dep.testemunha} (-8h):</strong> Você reduziu a pressão sobre esta testemunha. O nível de tensão dela baixou.</div>${historicoAtual}`;
-            detalheBox.style.background = '#e0f2fe';
-            detalheBox.style.borderColor = '#0284c7';
-        });
+      detalheBox.innerHTML = `<div>☕ <strong>Pausa com ${dep.testemunha} (-${CUSTO_CAFE}h):</strong> Você reduziu a pressão sobre esta testemunha. O nível de tensão dela baixou.</div>${historicoAtual}`;
+      detalheBox.style.background = '#e0f2fe';
+      detalheBox.style.borderColor = '#0284c7';
     });
+  });
 
-    const spansFrases = container.querySelectorAll('.frase-confronto');
-    spansFrases.forEach(span => {
-        span.addEventListener('click', () => {
-            if (emMinijogoAtivo) return;
+  const spansFrases = container.querySelectorAll('.frase-confronto');
+  spansFrases.forEach(span => {
+    span.addEventListener('click', () => {
+      if (emMinijogoAtivo || interrogatorioEncerrado || periciaBloqueada()) return;
 
-            const id = span.getAttribute('data-id');
-            const testemunhaIdx = parseInt(span.getAttribute('data-testemunha-idx'), 10);
-            const nomeTestemunha = depoimentos[testemunhaIdx]?.testemunha || `Testemunha ${testemunhaIdx + 1}`;
-            const texto = span.textContent;
+      const id = span.getAttribute('data-id');
+      const testemunhaIdx = parseInt(span.getAttribute('data-testemunha-idx'), 10);
+      const nomeTestemunha = depoimentos[testemunhaIdx]?.testemunha || `Testemunha ${testemunhaIdx + 1}`;
+      const texto = span.textContent;
 
-            if (selecaoA && selecaoA.id === id) {
-                span.classList.remove('selecionada');
-                selecaoA = null;
-                slotA.innerHTML = `<strong>Versão A:</strong> <em>Nenhuma</em>`;
-                btnConfrontar.disabled = true;
-                btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
-                return;
-            }
+      if (selecaoA && selecaoA.id === id) {
+        span.classList.remove('selecionada');
+        selecaoA = null;
+        slotA.innerHTML = `<strong>Versão A:</strong> <em>Nenhuma</em>`;
+        btnConfrontar.disabled = true;
+        btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
+        return;
+      }
 
-            if (selecaoB && selecaoB.id === id) {
-                span.classList.remove('selecionada');
-                selecaoB = null;
-                slotB.innerHTML = `<strong>Versão B:</strong> <em>Nenhuma</em>`;
-                btnConfrontar.disabled = true;
-                btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
-                return;
-            }
+      if (selecaoB && selecaoB.id === id) {
+        span.classList.remove('selecionada');
+        selecaoB = null;
+        slotB.innerHTML = `<strong>Versão B:</strong> <em>Nenhuma</em>`;
+        btnConfrontar.disabled = true;
+        btnConfrontar.textContent = '⚡ TESTAR CONFRONTO NO POLÍGRAFO';
+        return;
+      }
 
-            if (selecaoA && selecaoA.testemunhaIdx === testemunhaIdx) {
-                container.querySelectorAll(`[data-testemunha-idx="${testemunhaIdx}"]`).forEach(s => s.classList.remove('selecionada'));
-                if (selecaoB) selecaoB.spanEl?.classList.add('selecionada');
-                span.classList.add('selecionada');
-                selecaoA = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
-                slotA.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
-            } else if (selecaoB && selecaoB.testemunhaIdx === testemunhaIdx) {
-                container.querySelectorAll(`[data-testemunha-idx="${testemunhaIdx}"]`).forEach(s => s.classList.remove('selecionada'));
-                if (selecaoA) selecaoA.spanEl?.classList.add('selecionada');
-                span.classList.add('selecionada');
-                selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
-                slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
-            } else if (!selecaoA) {
-                span.classList.add('selecionada');
-                selecaoA = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
-                slotA.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
-            } else if (!selecaoB) {
-                span.classList.add('selecionada');
-                selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
-                slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
-            } else {
-                if (selecaoB.spanEl) selecaoB.spanEl.classList.remove('selecionada');
-                span.classList.add('selecionada');
-                selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
-                slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
-            }
+      if (selecaoA && selecaoA.testemunhaIdx === testemunhaIdx) {
+        container.querySelectorAll(`[data-testemunha-idx="${testemunhaIdx}"]`).forEach(s => s.classList.remove('selecionada'));
+        if (selecaoB) selecaoB.spanEl?.classList.add('selecionada');
+        span.classList.add('selecionada');
+        selecaoA = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
+        slotA.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
+      } else if (selecaoB && selecaoB.testemunhaIdx === testemunhaIdx) {
+        container.querySelectorAll(`[data-testemunha-idx="${testemunhaIdx}"]`).forEach(s => s.classList.remove('selecionada'));
+        if (selecaoA) selecaoA.spanEl?.classList.add('selecionada');
+        span.classList.add('selecionada');
+        selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
+        slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
+      } else if (!selecaoA) {
+        span.classList.add('selecionada');
+        selecaoA = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
+        slotA.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
+      } else if (!selecaoB) {
+        span.classList.add('selecionada');
+        selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
+        slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
+      } else {
+        if (selecaoB.spanEl) selecaoB.spanEl.classList.remove('selecionada');
+        span.classList.add('selecionada');
+        selecaoB = { id, texto, testemunhaIdx, nomeTestemunha, spanEl: span };
+        slotB.innerHTML = `<strong>${nomeTestemunha}:</strong> "${texto}"`;
+      }
 
-            atualizarTextoBotaoConfronto();
-        });
+      atualizarTextoBotaoConfronto();
     });
+  });
 
-    btnConfrontar.addEventListener('click', () => {
-        if (!selecaoA || !selecaoB) return;
+  btnConfrontar.addEventListener('click', () => {
+    if (!selecaoA || !selecaoB || interrogatorioEncerrado || periciaBloqueada()) return;
 
-        if (!emMinijogoAtivo) {
-            const custoExtra = calcularCustoExtraSelecao();
-            if (custoExtra > 0) {
-                if (typeof window.descontarHoras === 'function') {
-                    window.descontarHoras(custoExtra);
-                } else if (typeof caso.horas_restantes === 'number') {
-                    caso.horas_restantes = Math.max(0, caso.horas_restantes - custoExtra);
-                }
-            }
-
-            emMinijogoAtivo = true;
-            painelPoligrafo.classList.add('modo-teste-ativo');
-            statusPoligrafo.textContent = 'ESTADO: 🚨 ANALISANDO REAÇÃO PSICOLÓGICA...';
-            statusPoligrafo.style.color = '#ff4d4d';
-            barraTiming.classList.add('ativo');
-
-            const larguraZona = 12;
-            zonaAlvoInicio = Math.floor(Math.random() * (60 - larguraZona)) + 25;
-            zonaAlvoFim = zonaAlvoInicio + larguraZona;
-
-            zonaAlvo.style.left = `${zonaAlvoInicio}%`;
-            zonaAlvo.style.width = `${larguraZona}%`;
-
-            const avisoCusto = custoExtra > 0 ? ` <em>(-${custoExtra}h aplicadas pela hostilidade)</em>` : '';
-            detalheBox.innerHTML = `⏳ <strong>Polígrafo Ativo!</strong>${avisoCusto} A barra de stress está descendo. Clique quando o indicador passar pela <strong>zona dourada aleatória</strong>!`;
-            detalheBox.style.background = '#fef3c7';
-            detalheBox.style.borderColor = '#d97706';
-
-            btnConfrontar.textContent = '🎯 CLICAR NO PICO DE STRESS!';
-            btnConfrontar.style.background = '#b91c1c';
-
-            startTime = performance.now();
-
-            function animarBarra(timestamp) {
-                if (!layoutAtivo || !emMinijogoAtivo) return;
-                const decorrido = timestamp - startTime;
-                const progresso = Math.min((decorrido / duracaoMinijogo) * 100, 100);
-                const porcentagemAtual = 100 - progresso;
-
-                timingFill.style.width = `${porcentagemAtual}%`;
-
-                if (decorrido < duracaoMinijogo && emMinijogoAtivo) {
-                    animacaoFrame = requestAnimationFrame(animarBarra);
-                } else if (emMinijogoAtivo) {
-                    finalizarMinijogo(false, false, "⏰ Tempo esgotado! O polígrafo estabilizou sem registrar picos.");
-                }
-            }
-
-            animacaoFrame = requestAnimationFrame(animarBarra);
-        } else {
-            if (animacaoFrame) cancelAnimationFrame(animacaoFrame);
-            const decorrido = performance.now() - startTime;
-            const progresso = Math.min((decorrido / duracaoMinijogo) * 100, 100);
-            const porcentagemAtual = 100 - progresso;
-
-            const acertouTiming = (porcentagemAtual >= zonaAlvoInicio && porcentagemAtual <= zonaAlvoFim);
-
-            const confrontoEncontrado = confrontosCorretos.find(c =>
-                (c.frase_a_id === selecaoA?.id && c.frase_b_id === selecaoB?.id) ||
-                (c.frase_a_id === selecaoB?.id && c.frase_b_id === selecaoA?.id)
-            );
-
-            if (confrontoEncontrado && confrontoEncontrado.pista_id && paresResolvidos.has(confrontoEncontrado.id_par)) {
-                emMinijogoAtivo = false;
-                barraTiming.classList.remove('ativo');
-                painelPoligrafo.classList.remove('modo-teste-ativo');
-
-                const historicoAtual = pistasDescobertasHtml
-                    ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
-                    : '';
-
-                detalheBox.innerHTML = `<div>⚠️ Esta contradição já foi descoberta e registrada anteriormente. Procure outro cruzamento!</div>${historicoAtual}`;
-                detalheBox.style.background = '#fef3c7';
-                detalheBox.style.borderColor = '#d97706';
-                statusPoligrafo.textContent = 'ESTADO: 🟡 PAR JÁ REGISTRADO';
-                statusPoligrafo.style.color = '#ffcc00';
-                atualizarTextoBotaoConfronto();
-                return;
-            }
-
-            const acertouLogica = (confrontoEncontrado !== undefined);
-
-            if (acertouLogica && acertouTiming && confrontoEncontrado.pista_id) {
-                paresResolvidos.add(confrontoEncontrado.id_par);
-
-                const pistaObj = pistasGlobais.find(p => p.id_pista === confrontoEncontrado.pista_id) || { descricao_revelada: "Contradição confirmada!" };
-                const todasResolvidas = totalPistasPossiveis > 0 && paresResolvidos.size >= totalPistasPossiveis;
-
-                pistasDescobertasHtml += `<div class="bloco-pista"> ✅ <strong>Pista Descoberta (${paresResolvidos.size}/${totalPistasPossiveis}) - ${pistaObj.nome || 'Evidência'}:</strong><br> <em>"${pistaObj.descricao_revelada}"</em> </div>`;
-
-                let msgSucesso = `<strong>📊 Relatório de Interrogatório Atualizado:</strong><br>${pistasDescobertasHtml}`;
-                if (todasResolvidas) {
-                    msgSucesso += `<br><span style="color: #1b4332; font-weight: bold; margin-top: 12px; display: block;">🔒 Todas as pistas de contradição foram extraídas! Já podes emitir o mandado de prisão.</span>`;
-                } else {
-                    msgSucesso += `<br><span style="color: #856404; font-weight: bold; margin-top: 12px; display: block;">🔍 Pista desbloqueada! Selecione novos pares para continuar.</span>`;
-                }
-
-                finalizarMinijogo(true, todasResolvidas, msgSucesso);
-            } else if (acertouLogica && acertouTiming && !confrontoEncontrado.pista_id) {
-                divergenciasSemPistaTestadas.add(confrontoEncontrado.id_par);
-                const msgDivergencia = confrontoEncontrado.feedback_contradicao || "Há divergência entre os relatos, mas este ponto não revela uma pista nova para a investigação.";
-                const historicoAtual = pistasDescobertasHtml
-                    ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
-                    : '';
-
-                emMinijogoAtivo = false;
-                barraTiming.classList.remove('ativo');
-                painelPoligrafo.classList.remove('modo-teste-ativo');
-                estadoOndaEcg = 'normal';
-                detalheBox.innerHTML = `<div>ℹ️ <strong>Divergência Sem Pista Nova:</strong> ${msgDivergencia}</div>${historicoAtual}`;
-                detalheBox.style.background = '#fef9c3';
-                detalheBox.style.borderColor = '#ca8a04';
-                statusPoligrafo.textContent = 'ESTADO: 🟡 DIVERGÊNCIA SEM NOVA PISTA';
-                statusPoligrafo.style.color = '#ffcc00';
-                atualizarTextoBotaoConfronto();
-            } else if (!acertouLogica) {
-                finalizarMinijogo(false, false, `❌ <strong>Falso Positivo / Sem Contradição:</strong> Estas declarações não se contradizem. A tensão de <strong>${selecaoA.nomeTestemunha}</strong> e <strong>${selecaoB.nomeTestemunha}</strong> aumentou!`);
-            } else {
-                finalizarMinijogo(false, false, `❌ <strong>Timing Incorreto!</strong> A contradição existe, mas clicaste fora da zona dourada. As testemunhas ficaram mais tensas!`);
-            }
+    if (!emMinijogoAtivo) {
+      const custoExtra = calcularCustoExtraSelecao();
+      if (custoExtra > 0) {
+        if (typeof window.descontarHoras === 'function') {
+          window.descontarHoras(custoExtra, 'Hostilidade no confronto');
+          if (periciaBloqueada()) return;
+        } else if (typeof caso.horas_restantes === 'number') {
+          caso.horas_restantes = Math.max(0, caso.horas_restantes - custoExtra);
         }
-    });
+      }
 
-    function finalizarMinijogo(sucesso, conclusaoTotal, mensagem) {
+      emMinijogoAtivo = true;
+      painelPoligrafo.classList.add('modo-teste-ativo');
+      statusPoligrafo.textContent = 'ESTADO: 🚨 ANALISANDO REAÇÃO PSICOLÓGICA...';
+      statusPoligrafo.style.color = '#ff4d4d';
+      barraTiming.classList.add('ativo');
+
+      const larguraZona = 14;
+      zonaAlvoInicio = Math.floor(Math.random() * (60 - larguraZona)) + 25;
+      zonaAlvoFim = zonaAlvoInicio + larguraZona;
+
+      zonaAlvo.style.left = `${zonaAlvoInicio}%`;
+      zonaAlvo.style.width = `${larguraZona}%`;
+
+      const avisoCusto = custoExtra > 0 ? ` <em>(-${custoExtra}h aplicadas pela hostilidade)</em>` : '';
+      detalheBox.innerHTML = `⏳ <strong>Polígrafo Ativo!</strong>${avisoCusto} A barra de stress está descendo. Clique quando o indicador passar pela <strong>zona dourada</strong>!`;
+      detalheBox.style.background = '#fef3c7';
+      detalheBox.style.borderColor = '#d97706';
+
+      btnConfrontar.textContent = '🎯 CLICAR NO PICO DE STRESS!';
+      btnConfrontar.style.background = '#b91c1c';
+
+      startTime = performance.now();
+
+      function animarBarra(timestamp) {
+        if (!layoutAtivo || !emMinijogoAtivo) return;
+        const decorrido = timestamp - startTime;
+        const progresso = Math.min((decorrido / duracaoMinijogo) * 100, 100);
+        const porcentagemAtual = 100 - progresso;
+
+        timingFill.style.width = `${porcentagemAtual}%`;
+
+        if (decorrido < duracaoMinijogo && emMinijogoAtivo) {
+          animacaoFrame = requestAnimationFrame(animarBarra);
+        } else if (emMinijogoAtivo) {
+          finalizarMinijogo(false, false, "⏰ Tempo esgotado (-5h)! O polígrafo estabilizou sem registrar picos.", { subirTensao: false, descontoErro: 5 });
+        }
+      }
+
+      animacaoFrame = requestAnimationFrame(animarBarra);
+    } else {
+      if (animacaoFrame) cancelAnimationFrame(animacaoFrame);
+      const decorrido = performance.now() - startTime;
+      const progresso = Math.min((decorrido / duracaoMinijogo) * 100, 100);
+      const porcentagemAtual = 100 - progresso;
+
+      const acertouTiming = (porcentagemAtual >= zonaAlvoInicio && porcentagemAtual <= zonaAlvoFim);
+
+      const confrontoEncontrado = confrontosCorretos.find(c =>
+        (c.frase_a_id === selecaoA?.id && c.frase_b_id === selecaoB?.id) ||
+        (c.frase_a_id === selecaoB?.id && c.frase_b_id === selecaoA?.id)
+      );
+
+      if (confrontoEncontrado && confrontoEncontrado.pista_id && paresResolvidos.has(confrontoEncontrado.id_par)) {
         emMinijogoAtivo = false;
         barraTiming.classList.remove('ativo');
         painelPoligrafo.classList.remove('modo-teste-ativo');
 
-        if (sucesso) {
-            estadoOndaEcg = 'acerto';
-            detalheBox.innerHTML = mensagem;
-            detalheBox.style.background = '#d8f3dc';
-            detalheBox.style.borderColor = '#2d6a4f';
+        const historicoAtual = pistasDescobertasHtml
+          ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
+          : '';
 
-            if (conclusaoTotal) {
-                statusPoligrafo.textContent = 'ESTADO: 🔒 INTERROGATÓRIO CONCLUÍDO';
-                statusPoligrafo.style.color = '#ffcc00';
-                btnConfrontar.disabled = true;
-                btnConfrontar.textContent = '🔒 CASO RESOLVIDO NESTE SETOR';
-                btnConfrontar.style.background = '#1b4332';
-            } else {
-                statusPoligrafo.textContent = 'ESTADO: 🟢 PARCIALMENTE RESOLVIDO';
-                statusPoligrafo.style.color = '#ffcc00';
-                btnConfrontar.disabled = true;
-                btnConfrontar.textContent = '⚡ SELECIONE NOVAS FRASES';
-                btnConfrontar.style.background = '#3b2718';
+        detalheBox.innerHTML = `<div>⚠️ Esta contradição já foi descoberta e registrada anteriormente. Procure outro cruzamento!</div>${historicoAtual}`;
+        detalheBox.style.background = '#fef3c7';
+        detalheBox.style.borderColor = '#d97706';
+        statusPoligrafo.textContent = 'ESTADO: 🟡 PAR JÁ REGISTRADO';
+        statusPoligrafo.style.color = '#ffcc00';
+        atualizarTextoBotaoConfronto();
+        return;
+      }
 
-                selecaoA = null;
-                selecaoB = null;
-                container.querySelectorAll('.frase-confronto').forEach(s => s.classList.remove('selecionada'));
-                slotA.innerHTML = `<strong>Versão A:</strong> <em>Nenhuma</em>`;
-                slotB.innerHTML = `<strong>Versão B:</strong> <em>Nenhuma</em>`;
-            }
-        } else {
-            estadoOndaEcg = 'erro';
-            if (selecaoA) {
-                tensaoTestemunhas[selecaoA.testemunhaIdx] = Math.min(3, tensaoTestemunhas[selecaoA.testemunhaIdx] + 1);
-                atualizarCartaoTestemunha(selecaoA.testemunhaIdx);
-            }
-            if (selecaoB && selecaoB.testemunhaIdx !== selecaoA?.testemunhaIdx) {
-                tensaoTestemunhas[selecaoB.testemunhaIdx] = Math.min(3, tensaoTestemunhas[selecaoB.testemunhaIdx] + 1);
-                atualizarCartaoTestemunha(selecaoB.testemunhaIdx);
-            }
+      const acertouLogica = (confrontoEncontrado !== undefined);
 
-            const historicoAtual = pistasDescobertasHtml
-                ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
-                : '';
+      if (acertouLogica && acertouTiming && confrontoEncontrado.pista_id) {
+        const jaResolvido = paresResolvidos.has(confrontoEncontrado.id_par);
+        paresResolvidos.add(confrontoEncontrado.id_par);
+        atualizarContadorInterrogatorio();
 
-            detalheBox.innerHTML = `<div>${mensagem}</div>${historicoAtual}`;
-            detalheBox.style.background = '#ffccd5';
-            detalheBox.style.borderColor = '#800f2f';
-
-            statusPoligrafo.textContent = 'ESTADO: 🟡 TENSÃO ELEVADA NAS ENVOLVIDAS';
-            statusPoligrafo.style.color = '#ffcc00';
-            atualizarTextoBotaoConfronto();
+        const pistaObj = pistasGlobais.find(p => p.id_pista === confrontoEncontrado.pista_id) || { descricao_revelada: "Contradição confirmada!" };
+        if (!jaResolvido) {
+          const custoPista = Number(pistaObj.custo_horas) || 15;
+          window.descontarHoras(custoPista, `Contradição: ${pistaObj.nome || confrontoEncontrado.pista_id}`);
+          if (periciaBloqueada()) return;
         }
+        const todasResolvidas = totalPistasPossiveis > 0 && paresResolvidos.size >= totalPistasPossiveis;
+
+        pistasDescobertasHtml += `<div class="bloco-pista"> ✅ <strong>Pista Descoberta (${paresResolvidos.size}/${totalPistasPossiveis}) - ${pistaObj.nome || 'Evidência'}:</strong><br> <em>"${pistaObj.descricao_revelada}"</em> </div>`;
+
+        let msgSucesso = `<strong>📊 Relatório de Interrogatório Atualizado:</strong><br>${pistasDescobertasHtml}`;
+        if (todasResolvidas) {
+          msgSucesso += `<br><span style="color: #1b4332; font-weight: bold; margin-top: 12px; display: block;">🔒 Todas as pistas de contradição foram extraídas! Já podes emitir o mandado de prisão.</span>`;
+        } else {
+          msgSucesso += `<br><span style="color: #856404; font-weight: bold; margin-top: 12px; display: block;">🔍 Pista desbloqueada! Selecione novos pares para continuar.</span>`;
+        }
+
+        finalizarMinijogo(true, todasResolvidas, msgSucesso);
+      } else if (acertouLogica && acertouTiming && !confrontoEncontrado.pista_id) {
+        divergenciasSemPistaTestadas.add(confrontoEncontrado.id_par);
+        const msgDivergencia = confrontoEncontrado.feedback_contradicao || "Há divergência entre os relatos, mas este ponto não revela uma pista nova para a investigação.";
+        const historicoAtual = pistasDescobertasHtml
+          ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
+          : '';
+
+        emMinijogoAtivo = false;
+        barraTiming.classList.remove('ativo');
+        painelPoligrafo.classList.remove('modo-teste-ativo');
+        estadoOndaEcg = 'normal';
+        detalheBox.innerHTML = `<div>ℹ️ <strong>Divergência Sem Pista Nova:</strong> ${msgDivergencia}</div>${historicoAtual}`;
+        detalheBox.style.background = '#fef9c3';
+        detalheBox.style.borderColor = '#ca8a04';
+        statusPoligrafo.textContent = 'ESTADO: 🟡 DIVERGÊNCIA SEM NOVA PISTA';
+        statusPoligrafo.style.color = '#ffcc00';
+        atualizarTextoBotaoConfronto();
+      } else if (!acertouLogica) {
+        const parJaResolvido = confrontoEncontrado && paresResolvidos.has(confrontoEncontrado.id_par);
+        if (!parJaResolvido) {
+          window.descontarHoras(5, 'Erro lógico no confronto');
+          if (periciaBloqueada()) return;
+        }
+        finalizarMinijogo(false, false, `❌ <strong>Falso Positivo / Sem Contradição:</strong> Estas declarações não se contradizem (-5h). A tensão de <strong>${selecaoA.nomeTestemunha}</strong> e <strong>${selecaoB.nomeTestemunha}</strong> aumentou!`, { subirTensao: true });
+      } else {
+        const parJaResolvido = confrontoEncontrado && paresResolvidos.has(confrontoEncontrado.id_par);
+        if (!parJaResolvido) {
+          window.descontarHoras(5, 'Erro de timing no polígrafo');
+          if (periciaBloqueada()) return;
+        }
+        finalizarMinijogo(false, false, `⚠️ <strong>Timing Incorreto (-5h):</strong> A contradição entre essas frases está certa, mas você clicou fora da zona dourada. A tensão não subiu — tente novamente no pico de stress!`, { subirTensao: false });
+      }
     }
+  });
+
+  function finalizarMinijogo(sucesso, conclusaoTotal, mensagem, opcoes = {}) {
+    emMinijogoAtivo = false;
+    barraTiming.classList.remove('ativo');
+    painelPoligrafo.classList.remove('modo-teste-ativo');
+
+    if (sucesso) {
+      estadoOndaEcg = 'acerto';
+      detalheBox.innerHTML = mensagem;
+      detalheBox.style.background = '#d8f3dc';
+      detalheBox.style.borderColor = '#2d6a4f';
+
+      if (conclusaoTotal) {
+        interrogatorioEncerrado = true;
+        statusPoligrafo.textContent = 'ESTADO: 🔒 INTERROGATÓRIO CONCLUÍDO';
+        statusPoligrafo.style.color = '#ffcc00';
+        btnConfrontar.disabled = true;
+        btnConfrontar.textContent = '🔒 CASO RESOLVIDO NESTE SETOR';
+        btnConfrontar.style.background = '#1b4332';
+      } else {
+        statusPoligrafo.textContent = 'ESTADO: 🟢 PARCIALMENTE RESOLVIDO';
+        statusPoligrafo.style.color = '#ffcc00';
+        btnConfrontar.disabled = true;
+        btnConfrontar.textContent = '⚡ SELECIONE NOVAS FRASES';
+        btnConfrontar.style.background = '#3b2718';
+
+        selecaoA = null;
+        selecaoB = null;
+        container.querySelectorAll('.frase-confronto').forEach(s => s.classList.remove('selecionada'));
+        slotA.innerHTML = `<strong>Versão A:</strong> <em>Nenhuma</em>`;
+        slotB.innerHTML = `<strong>Versão B:</strong> <em>Nenhuma</em>`;
+      }
+    } else {
+      estadoOndaEcg = 'erro';
+      if (opcoes.descontoErro && typeof window.descontarHoras === 'function') {
+        window.descontarHoras(opcoes.descontoErro, 'Tempo esgotado no polígrafo');
+        if (periciaBloqueada()) return;
+      }
+      if (opcoes.subirTensao) {
+        if (selecaoA) {
+          tensaoTestemunhas[selecaoA.testemunhaIdx] = Math.min(3, tensaoTestemunhas[selecaoA.testemunhaIdx] + 1);
+          atualizarCartaoTestemunha(selecaoA.testemunhaIdx);
+        }
+        if (selecaoB && selecaoB.testemunhaIdx !== selecaoA?.testemunhaIdx) {
+          tensaoTestemunhas[selecaoB.testemunhaIdx] = Math.min(3, tensaoTestemunhas[selecaoB.testemunhaIdx] + 1);
+          atualizarCartaoTestemunha(selecaoB.testemunhaIdx);
+        }
+      }
+
+      const historicoAtual = pistasDescobertasHtml
+        ? `<div style="margin-top: 10px;"><strong>📊 Pistas já extraídas:</strong>${pistasDescobertasHtml}</div>`
+        : '';
+
+      detalheBox.innerHTML = `<div>${mensagem}</div>${historicoAtual}`;
+      detalheBox.style.background = '#ffccd5';
+      detalheBox.style.borderColor = '#800f2f';
+
+      statusPoligrafo.textContent = opcoes.subirTensao
+        ? 'ESTADO: 🟡 TENSÃO ELEVADA NAS ENVOLVIDAS'
+        : 'ESTADO: 🟡 CONTRADIÇÃO CONFIRMADA — AJUSTE O TIMING';
+      statusPoligrafo.style.color = '#ffcc00';
+      atualizarTextoBotaoConfronto();
+    }
+  }
 }
 
 function renderizarLayoutLaboratorio(caso, container) {
@@ -2045,27 +2320,43 @@ function renderizarLayoutLaboratorio(caso, container) {
 
     container.querySelectorAll('.frasco-item').forEach(frasco => {
         frasco.addEventListener('click', () => {
+            if (periciaBloqueada()) return;
             if (!amostraAtiva || normalizarEstacao(amostraAtiva.tipo_estacao) !== 'reagentes') {
                 atualizarFeedback(`⚠️ <strong>Bancada Vazia:</strong> Selecione uma amostra química na gaveta antes de pingar reagentes.`, 'erro');
                 return;
             }
 
+            const amostraRef = amostraAtiva;
+            const jaIsolada = analisesIsoladas.has(amostraRef.id_amostra);
             const escolha = frasco.getAttribute('data-reagente');
             dispararBolhas();
 
-            if (escolha === amostraAtiva.reagente_correto) {
+            if (escolha === amostraRef.reagente_correto) {
                 liquidoReacao.className = 'liquido-tubo preenchido reacao-sucesso';
-                const detalheReacao = amostraAtiva.resultado_quimico || `Reação controlada com ${formatarNomeReagente(escolha)}; composto estabilizado para análise.`;
-                concluirIsolamentoEstacao(amostraAtiva, detalheReacao);
+                const detalheReacao = amostraRef.resultado_quimico || `Reação controlada com ${formatarNomeReagente(escolha)}; composto estabilizado para análise.`;
+                concluirIsolamentoEstacao(amostraRef, detalheReacao);
             } else {
+                if (!jaIsolada) {
+                    window.descontarHoras(5, 'Reagente incompatível');
+                    if (periciaBloqueada()) return;
+                }
+
                 liquidoReacao.className = 'liquido-tubo preenchido reacao-falha';
                 tuboPrincipal.classList.add('tremor-vidro');
                 setTimeout(() => {
                     tuboPrincipal.classList.remove('tremor-vidro');
-                    liquidoReacao.className = 'liquido-tubo preenchido';
+                    if (amostraAtiva && amostraAtiva.id_amostra === amostraRef.id_amostra) {
+                        liquidoReacao.className = jaIsolada
+                            ? 'liquido-tubo preenchido reacao-sucesso'
+                            : 'liquido-tubo preenchido';
+                    }
                 }, 700);
 
-                atualizarFeedback(`❌ <strong>Reação Incompatível:</strong> Consulte o <em>Protocolo de Neutralização Forense</em> na bancada e compare com as propriedades da amostra (${amostraAtiva.descricao}).`, 'erro');
+                if (jaIsolada) {
+                    atualizarFeedback(`ℹ️ <strong>Amostra Já Isolada:</strong> Essa amostra já foi neutralizada corretamente. Teste outro reagente apenas por curiosidade (sem desconto de horas).`, 'info');
+                } else {
+                    atualizarFeedback(`❌ <strong>Reação Incompatível:</strong> Consulte o <em>Protocolo de Neutralização Forense</em> na bancada e compare com as propriedades da amostra (${amostraRef.descricao}). (-5h)`, 'erro');
+                }
             }
         });
     });
@@ -2135,6 +2426,7 @@ function renderizarLayoutLaboratorio(caso, container) {
     }
 
     btnSintonizar.addEventListener('click', () => {
+        if (periciaBloqueada()) return;
         if (!amostraAtiva || normalizarEstacao(amostraAtiva.tipo_estacao) !== 'ondas') {
             atualizarFeedback(`⚠️ <strong>Sem Sinal de Entrada:</strong> Selecione a amostra acústica ou vibracional na gaveta primeiro.`, 'erro');
             return;
@@ -2145,6 +2437,10 @@ function renderizarLayoutLaboratorio(caso, container) {
             const detalheOnda = amostraAtiva.resultado_fisico || `Ressonância estabilizada em ${alvo} Hz com sinal limpo.`;
             concluirIsolamentoEstacao(amostraAtiva, detalheOnda);
         } else {
+            if (!analisesIsoladas.has(amostraAtiva.id_amostra)) {
+                window.descontarHoras(5, 'Frequência incorreta');
+                if (periciaBloqueada()) return;
+            }
             const dica = Math.abs(frequenciaAtual - alvo) <= 5
                 ? 'O sinal já está próximo (amarelo)! Use os botões -1 Hz / +1 Hz para eliminar o ruído restante.'
                 : `Ajuste o dial dentro da faixa indicada no laudo (${amostraAtiva.descricao}) até a onda ficar verde e sem chuvisco.`;
@@ -2153,6 +2449,13 @@ function renderizarLayoutLaboratorio(caso, container) {
     });
 
     function concluirIsolamentoEstacao(amostra, detalheTecnico) {
+        if (periciaBloqueada()) return;
+        if (analisesIsoladas.has(amostra.id_amostra)) return;
+
+        const custoAmostra = Number(amostra.custo_horas) || 10;
+        window.descontarHoras(custoAmostra, `Amostra isolada: ${amostra.nome}`);
+        if (periciaBloqueada()) return;
+
         analisesIsoladas.set(amostra.id_amostra, {
             amostra,
             detalheTecnico
@@ -2193,7 +2496,12 @@ function renderizarLayoutLaboratorio(caso, container) {
     }
 
     btnGerarChave.addEventListener('click', () => {
-        if (matrizConcluida) return;
+        if (periciaBloqueada() || matrizConcluida) return;
+        const pistaMaster = pistasGlobais.find(p => p.id_pista === 'master_lab');
+        const custoMaster = Number(pistaMaster && pistaMaster.custo_horas) || 15;
+        window.descontarHoras(custoMaster, 'Assinatura material definitiva');
+        if (periciaBloqueada()) return;
+        
         matrizConcluida = true;
         btnGerarChave.disabled = true;
         btnGerarChave.textContent = '🔒 ASSINATURA MATERIAL EMITIDA';

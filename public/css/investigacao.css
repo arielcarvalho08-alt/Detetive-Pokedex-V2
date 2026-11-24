@@ -4,12 +4,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin: 0 auto 20px auto;
   padding: 0 10px;
+  box-sizing: border-box;
   z-index: 10;
 }
 
-.painel-topo .btn-voltar {
+.painel-topo .btn-voltar,
+.painel-topo .btn-voltar-caso {
   position: static !important;
   top: auto !important;
   left: auto !important;
@@ -18,13 +21,28 @@
   white-space: nowrap;
 }
 
+@media (min-width: 1201px) {
+  .painel-topo .btn-voltar,
+  .painel-topo .btn-voltar-caso {
+    margin-left: calc((1200px - 100vw) / 2 + 24px) !important;
+  }
+}
+
 .titulo-caso-detalhe {
   color: #f4ebd9;
   font-size: 1.4rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   text-align: center;
   flex: 1;
+  min-width: 0;
   margin: 0 20px;
+}
+
+.topo-status-grupo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .badge-rank {
@@ -1981,4 +1999,53 @@
 .btn-guardar-folha:hover {
     background: #8b0000;
     color: #fff;
+}
+
+.topo-status-grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.badge-horas {
+  background: #231709;
+  color: #ffcc00;
+  padding: 6px 12px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #d97706;
+  white-space: nowrap;
+  transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.badge-horas.alerta-baixo {
+  background: #451a03;
+  color: #fde047;
+  border-color: #f59e0b;
+}
+
+.badge-horas.esgotado {
+  background: #450a0a;
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
+.badge-horas.flash-perda {
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
+}
+
+.pericia-esgotada-banner {
+  background: #3b0d0c;
+  color: #fecaca;
+  border: 1px solid #ef4444;
+  border-left: 4px solid #ef4444;
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
